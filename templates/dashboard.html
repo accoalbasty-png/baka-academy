@@ -1,1 +1,53 @@
-{% extends "base.html" %}{% block content %}<h2>Welcome, {{ user.username }}</h2><div class="cards"><a class="panel" href="{{ url_for('marks') }}"><h3>Teacher Mark Entry</h3><p>Enter marks for assigned classes and subjects.</p></a>{% if user.role == 'admin' %}<a class="panel" href="{{ url_for('admin') }}"><h3>Administration</h3><p>Create teacher accounts, assign subjects and add students.</p></a>{% endif %}</div>{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="dashboard">
+
+    <div class="dashboard-welcome">
+        <div>
+            <p class="welcome-label">BAKA ACADEMY</p>
+            <h1>Welcome, {{ user.username }}!</h1>
+            <p>Manage your school activities from one place.</p>
+        </div>
+        <div class="welcome-icon">🎓</div>
+    </div>
+
+    <h2 class="section-heading">School Management</h2>
+    <p class="section-description">Choose a section to continue.</p>
+
+    <div class="cards">
+
+        {% if user.role == 'admin' %}
+        <a class="panel dashboard-card" href="{{ url_for('admin') }}">
+            <div class="card-icon">🏫</div>
+            <h3>Administration</h3>
+            <p>Manage teacher accounts, staff accounts, assignments and school settings.</p>
+            <span class="card-link">Open Administration →</span>
+        </a>
+        {% endif %}
+
+        {% if user.role in ['admin', 'teacher'] %}
+        <a class="panel dashboard-card" href="{{ url_for('marks') }}">
+            <div class="card-icon">📝</div>
+            <h3>Teacher Mark Entry</h3>
+            <p>Enter, update and review examination marks for assigned classes.</p>
+            <span class="card-link">Open Mark Entry →</span>
+        </a>
+        {% endif %}
+
+        {% if user.role in ['admin', 'student_management'] %}
+        <a class="panel dashboard-card" href="{{ url_for('student_management') }}">
+            <div class="card-icon">👨‍🎓</div>
+            <h3>Student Management</h3>
+            <p>Register students, manage student information and view results.</p>
+            <span class="card-link">Open Student Management →</span>
+        </a>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

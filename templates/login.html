@@ -1,1 +1,63 @@
-{% extends "base.html" %}{% block content %}<section class="panel narrow"><h2>Sign in</h2><form method="post"><label>Username<input name="username" required></label><label>Password<input type="password" name="password" required></label><button>Login</button></form><p class="muted">Initial admin: admin / ChangeMe123! Change this password before real use.</p></section>{% endblock %}
+
+{% extends "base.html" %}
+
+{% block title %}Sign In | Baka Academy{% endblock %}
+
+{% block content %}
+
+<div class="login-page">
+
+    <section class="login-card">
+
+        <div class="login-logo">
+            <img
+                src="{{ url_for('static', filename='logo.jpg') }}"
+                alt="Baka Academy Logo"
+            >
+        </div>
+
+        <p class="login-school-name">BAKA ACADEMY</p>
+
+        <h2>Welcome Back</h2>
+
+        <p class="login-description">
+            Sign in to access your school management portal.
+        </p>
+
+        <form method="post">
+
+            <label for="username">Username</label>
+            <input
+                id="username"
+                type="text"
+                name="username"
+                placeholder="Enter your username"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                id="password"
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit" class="login-button">
+                Sign In
+            </button>
+
+        </form>
+
+        <p class="login-footer">
+            Authorized school personnel only.
+        </p>
+
+    </section>
+
+</div>
+
+{% endblock %}

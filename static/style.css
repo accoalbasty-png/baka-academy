@@ -1,1 +1,444 @@
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033}header{background:#17365d;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}header h1{margin:0;letter-spacing:2px;font-size:22px}nav{display:flex;gap:18px}nav a{color:white;text-decoration:none}main{max-width:1100px;margin:32px auto;padding:0 18px;min-height:70vh}h2{color:#17365d}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.panel{background:white;border-radius:12px;padding:22px;box-shadow:0 3px 14px #17203312}.cards a{color:inherit;text-decoration:none;border-top:5px solid #e0a526}.narrow{max-width:420px;margin:50px auto}label{display:block;font-weight:bold;margin:12px 0}input,select{display:block;width:100%;padding:11px;margin-top:6px;border:1px solid #cbd5e1;border-radius:7px;font:inherit}button{background:#17365d;color:white;border:0;border-radius:7px;padding:12px 18px;font-weight:bold;cursor:pointer;margin-top:10px}.toolbar{display:flex;gap:18px;align-items:end;flex-wrap:wrap}.toolbar label{min-width:210px}.table-wrap{overflow-x:auto;background:white;border-radius:10px;margin:18px 0}table{width:100%;border-collapse:collapse;min-width:550px}th,td{text-align:left;padding:13px;border-bottom:1px solid #e5eaf1}th{background:#eaf0f8;color:#17365d}.mark{max-width:110px}.muted,footer{color:#64748b}.notice{background:#fff4d6;padding:12px;border-radius:8px}footer{text-align:center;padding:25px;font-size:13px}
+
+/* =================================
+   BAKA ACADEMY - MAIN DESIGN
+================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --navy: #17365d;
+    --navy-dark: #102744;
+    --gold: #e0a526;
+    --background: #f3f6fb;
+    --white: #ffffff;
+    --text: #172033;
+    --muted: #64748b;
+    --border: #e5eaf1;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* HEADER */
+
+header {
+    background: var(--navy-dark);
+    color: white;
+    padding: 18px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 3px 12px #10274425;
+}
+
+header h1 {
+    margin: 0;
+    letter-spacing: 1.5px;
+    font-size: 23px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+nav a:hover {
+    color: var(--gold);
+}
+
+/* MAIN CONTENT */
+
+main {
+    max-width: 1200px;
+    margin: 35px auto;
+    padding: 0 22px;
+    min-height: 70vh;
+}
+
+h2 {
+    color: var(--navy);
+}
+
+/* DASHBOARD WELCOME */
+
+.dashboard-welcome {
+    background: linear-gradient(120deg, #17365d, #285487);
+    color: white;
+    padding: 35px;
+    border-radius: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 35px;
+    box-shadow: 0 8px 25px #17365d25;
+}
+
+.dashboard-welcome h1 {
+    margin: 5px 0;
+    font-size: 30px;
+}
+
+.dashboard-welcome p {
+    margin: 5px 0;
+    color: #e1eaf5;
+}
+
+.welcome-label {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 3px;
+}
+
+.welcome-icon {
+    font-size: 65px;
+}
+
+.section-heading {
+    margin-bottom: 3px;
+}
+
+.section-description {
+    color: var(--muted);
+    margin-top: 0;
+    margin-bottom: 22px;
+}
+
+/* DASHBOARD CARDS */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
+}
+
+.panel {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 25px;
+    box-shadow: 0 4px 18px #1720330c;
+}
+
+.dashboard-card {
+    color: inherit;
+    text-decoration: none;
+    border-top: 5px solid var(--gold);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px #17203318;
+}
+
+.card-icon {
+    font-size: 38px;
+    margin-bottom: 12px;
+}
+
+.dashboard-card h3 {
+    color: var(--navy);
+    margin: 5px 0 10px;
+    font-size: 20px;
+}
+
+.dashboard-card p {
+    color: var(--muted);
+    font-size: 14px;
+    min-height: 65px;
+}
+
+.card-link {
+    color: var(--navy);
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* FORMS */
+
+.narrow {
+    max-width: 440px;
+    margin: 50px auto;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+input,
+select,
+textarea {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font: inherit;
+    background: white;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid #8eb5e4;
+    border-color: var(--navy);
+}
+
+/* BUTTONS */
+
+button {
+    background: var(--navy);
+    color: white;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: var(--navy-dark);
+}
+
+/* TABLES */
+
+.toolbar {
+    display: flex;
+    gap: 18px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.toolbar label {
+    min-width: 210px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    margin: 18px 0;
+    box-shadow: 0 3px 15px #1720330c;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 550px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background: #eaf0f8;
+    color: var(--navy);
+}
+
+.mark {
+    max-width: 110px;
+}
+
+/* NOTICES */
+
+.muted,
+footer {
+    color: var(--muted);
+}
+
+.notice {
+    background: #fff4d6;
+    padding: 14px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+/* FOOTER */
+
+footer {
+    text-align: center;
+    padding: 25px;
+    font-size: 13px;
+}
+
+/* MOBILE RESPONSIVENESS */
+
+@media (max-width: 650px) {
+    header {
+        padding: 16px 20px;
+    }
+
+    header h1 {
+        font-size: 19px;
+    }
+
+    nav {
+        gap: 12px;
+    }
+
+    main {
+        margin: 22px auto;
+        padding: 0 15px;
+    }
+
+    .dashboard-welcome {
+        padding: 25px 20px;
+    }
+
+    .dashboard-welcome h1 {
+        font-size: 23px;
+    }
+
+    .welcome-icon {
+        font-size: 42px;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* LOGIN PAGE */
+
+.login-page {
+    min-height: 65vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 15px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    background: white;
+    padding: 35px;
+    border-radius: 18px;
+    box-shadow: 0 8px 30px #17203315;
+    text-align: center;
+}
+
+.login-logo img {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.login-school-name {
+    color: #17365d;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin: 12px 0 5px;
+}
+
+.login-card h2 {
+    font-size: 27px;
+    margin: 8px 0;
+}
+
+.login-description {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+.login-card form {
+    text-align: left;
+}
+
+.login-card input {
+    margin-bottom: 18px;
+}
+
+.login-button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    margin-top: 8px;
+}
+
+.login-footer {
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 25px;
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 25px 20px;
+    }
+}
+
+/* COMPACT SCHOOL HEADER */
+
+.main-header {
+    min-height: 75px;
+    padding: 10px 4%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.school-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    text-decoration: none;
+}
+
+.school-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.brand-text h1 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.brand-text span {
+    font-size: 11px;
+    color: #dce6f2;
+}
+
+.main-navigation {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+@media (max-width: 650px) {
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

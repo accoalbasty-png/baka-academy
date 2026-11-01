@@ -1,1 +1,78 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Baka Academy</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><header><h1>BAKA ACADEMY</h1><nav>{% if session.get('user_id') %}<a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('marks') }}">Mark Entry</a><a href="{{ url_for('admin') }}">Admin</a><a href="{{ url_for('logout') }}">Log out</a>{% endif %}</nav></header><main>{% with messages=get_flashed_messages() %}{% for m in messages %}<p class="notice">{{ m }}</p>{% endfor %}{% endwith %}{% block content %}{% endblock %}</main><footer>Baka Academy · School Portal</footer></body></html>
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{% block title %}Baka Academy{% endblock %}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="main-header">
+
+    <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}"
+       class="school-brand">
+
+        <img
+            src="{{ url_for('static', filename='logo.jpg') }}"
+            alt="Baka Academy Logo"
+            class="school-logo"
+        >
+
+        <div class="brand-text">
+            <h1>BAKA ACADEMY</h1>
+            <span>School Management System</span>
+        </div>
+
+    </a>
+
+    {% if session.get('user_id') %}
+    <nav class="main-navigation">
+
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+
+        {% if session.get('role') in ['admin', 'teacher'] %}
+        <a href="{{ url_for('marks') }}">Mark Entry</a>
+        {% endif %}
+
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('admin') }}">Administration</a>
+        {% endif %}
+
+        {% if session.get('role') in ['admin', 'student_management'] %}
+        <a href="{{ url_for('student_management') }}">Students</a>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}" class="logout-link">
+            Log out
+        </a>
+
+    </nav>
+    {% endif %}
+
+</header>
+
+<main>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p class="notice">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+</main>
+
+<footer>
+    <p>BAKA ACADEMY</p>
+    <span>School Management System · Ethiopia</span>
+</footer>
+
+</body>
+</html>
