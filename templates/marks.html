@@ -1,1 +1,313 @@
-{% extends "base.html" %}{% block content %}<h2>Teacher Mark Entry</h2>{% if assignments %}<form class="toolbar" method="get"><label>Assigned class / subject<select name="assignment_id" onchange="this.form.submit()">{% for a in assignments %}<option value="{{ a.id }}" {% if selected and selected.id==a.id %}selected{% endif %}>Grade {{ a.grade }} {{ a.section }} · {{ a.subject }}</option>{% endfor %}</select></label><label>Term<select name="term" onchange="this.form.submit()">{% for t in ['Term 1','Term 2','Term 3','Term 4'] %}<option {% if term==t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></label></form>{% if selected %}<p class="muted">Grade {{ selected.grade }} · Class {{ selected.section }} · {{ selected.subject }} · Maximum 100</p><form method="post"><input type="hidden" name="assignment_id" value="{{ selected.id }}"><input type="hidden" name="term" value="{{ term }}"><div class="table-wrap"><table><thead><tr><th>Student ID</th><th>Student name</th><th>Mark / 100</th></tr></thead><tbody>{% for s in students %}<tr><td>{{ s.student_id }}</td><td>{{ s.full_name }}</td><td><input class="mark" type="number" min="0" max="100" name="score_{{ s.id }}" value="{{ existing.get(s.id,'') }}"></td></tr>{% else %}<tr><td colspan="3">No students registered in this class.</td></tr>{% endfor %}</tbody></table></div><button>Save marks</button></form>{% endif %}{% else %}<p>No subject has been assigned to your account. Contact the administrator.</p>{% endif %}{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .marks-page {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 4px 8px 12px;
+    }
+
+    .marks-page h2 {
+        margin: 0 0 8px;
+        padding: 0;
+    }
+
+    .marks-page .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 12px;
+        margin: 0 0 8px;
+        padding: 8px;
+    }
+
+    .marks-page .toolbar label {
+        margin: 0;
+    }
+
+    .marks-page .muted {
+        margin: 5px 0;
+    }
+
+    .marks-page .table-wrap {
+        width: 100%;
+        max-width: none;
+        margin: 8px 0 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .marks-page table {
+        width: 100%;
+        min-width: 950px;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+    .marks-page th,
+    .marks-page td {
+        padding: 8px 6px;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .marks-page th:nth-child(1),
+    .marks-page td:nth-child(1),
+    .marks-page th:nth-child(2),
+    .marks-page td:nth-child(2) {
+        text-align: left;
+    }
+
+    .marks-page .assessment-input {
+        width: 76px;
+        max-width: 100%;
+        padding: 6px;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .marks-page .assessment-total {
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .marks-page .assessment-status {
+        min-width: 105px;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+        .marks-page {
+            padding: 4px;
+        }
+
+        .marks-page .toolbar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="marks-page">
+
+    <h2>Teacher Assessment Entry</h2>
+
+    {% if assignments %}
+
+    <form class="toolbar" method="get">
+        <label>
+            Assigned class / subject
+            <select name="assignment_id" onchange="this.form.submit()">
+                {% for a in assignments %}
+                <option value="{{ a.id }}"
+                    {% if selected and selected.id == a.id %}selected{% endif %}>
+                    Grade {{ a.grade }} {{ a.section }} · {{ a.subject }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label>
+            Semester
+            <select name="term" onchange="this.form.submit()">
+                <option value="Semester 1"
+                    {% if term == "Semester 1" or term == "Term 1" %}selected{% endif %}>
+                    Semester 1
+                </option>
+                <option value="Semester 2"
+                    {% if term == "Semester 2" or term == "Term 2" %}selected{% endif %}>
+                    Semester 2
+                </option>
+            </select>
+        </label>
+    </form>
+
+    {% if selected %}
+
+    <p class="muted">
+        Grade {{ selected.grade }} · Class {{ selected.section }}
+        · {{ selected.subject }} · Maximum 100
+    </p>
+
+    <p class="muted">
+        Enter marks below. Each mark saves automatically when you finish editing.
+    </p>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Student name</th>
+                    <th>Quiz 1 /10</th>
+                    <th>Assignment /10</th>
+                    <th>Midterm /30</th>
+                    <th>Quiz 2 /10</th>
+                    <th>Final /40</th>
+                    <th>Total /100</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for s in students %}
+                {% set saved = assessment_existing.get(s.id) if assessment_existing else none %}
+
+                <tr class="assessment-row" data-student-id="{{ s.id }}">
+                    <td>{{ s.student_id }}</td>
+                    <td>{{ s.full_name }}</td>
+
+                    <td>
+                        <input class="assessment-input"
+                               type="number" min="0" max="10" step="0.01"
+                               data-field="quiz1"
+                               value="{{ saved.quiz1 if saved and saved.quiz1 is not none else '' }}"
+                               aria-label="Quiz 1 for {{ s.full_name }}">
+                    </td>
+
+                    <td>
+                        <input class="assessment-input"
+                               type="number" min="0" max="10" step="0.01"
+                               data-field="assignment"
+                               value="{{ saved.assignment if saved and saved.assignment is not none else '' }}"
+                               aria-label="Assignment for {{ s.full_name }}">
+                    </td>
+
+                    <td>
+                        <input class="assessment-input"
+                               type="number" min="0" max="30" step="0.01"
+                               data-field="midterm"
+                               value="{{ saved.midterm if saved and saved.midterm is not none else '' }}"
+                               aria-label="Midterm for {{ s.full_name }}">
+                    </td>
+
+                    <td>
+                        <input class="assessment-input"
+                               type="number" min="0" max="10" step="0.01"
+                               data-field="quiz2"
+                               value="{{ saved.quiz2 if saved and saved.quiz2 is not none else '' }}"
+                               aria-label="Quiz 2 for {{ s.full_name }}">
+                    </td>
+
+                    <td>
+                        <input class="assessment-input"
+                               type="number" min="0" max="40" step="0.01"
+                               data-field="final"
+                               value="{{ saved.final if saved and saved.final is not none else '' }}"
+                               aria-label="Final for {{ s.full_name }}">
+                    </td>
+
+                    <td class="assessment-total">
+                        {{ "%.2f"|format(saved.total) if saved else "0.00" }}
+                    </td>
+
+                    <td class="assessment-status">
+                        {% if saved %}Previously saved{% else %}Not entered{% endif %}
+                    </td>
+                </tr>
+
+                {% else %}
+                <tr>
+                    <td colspan="9">No students registered in this class.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const subject = {{ selected.subject|tojson }};
+        const semester = {{ ("Semester 2" if term in ["Semester 2", "Term 2"] else "Semester 1")|tojson }};
+
+        document.querySelectorAll(".assessment-row").forEach(function (row) {
+            const inputs = row.querySelectorAll(".assessment-input");
+            const totalCell = row.querySelector(".assessment-total");
+            const statusCell = row.querySelector(".assessment-status");
+
+            let saveQueue = Promise.resolve();
+
+            function calculateTotal() {
+                let total = 0;
+
+                inputs.forEach(function (input) {
+                    if (input.value !== "") {
+                        total += Number(input.value);
+                    }
+                });
+
+                totalCell.textContent = total.toFixed(2);
+            }
+
+            async function saveComponent(input) {
+                const value = input.value === "" ? null : Number(input.value);
+                const maximum = Number(input.max);
+
+                if (value !== null &&
+                    (!Number.isFinite(value) || value < 0 || value > maximum)) {
+                    statusCell.textContent = "Invalid mark";
+                    return;
+                }
+
+                statusCell.textContent = "Saving...";
+
+                try {
+                    const response = await fetch(
+                        "/teacher/assessment/" + row.dataset.studentId + "/save",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                subject: subject,
+                                semester: semester,
+                                component: input.dataset.field,
+                                score: value
+                            })
+                        }
+                    );
+
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || "Could not save mark.");
+                    }
+
+                    totalCell.textContent = Number(result.total).toFixed(2);
+                    statusCell.textContent = "Saved";
+
+                } catch (error) {
+                    statusCell.textContent = "Save failed";
+                    console.error(error);
+                }
+            }
+
+            inputs.forEach(function (input) {
+                input.addEventListener("input", calculateTotal);
+
+                input.addEventListener("change", function () {
+                    saveQueue = saveQueue.then(function () {
+                        return saveComponent(input);
+                    });
+                });
+            });
+
+            calculateTotal();
+        });
+    });
+    </script>
+
+    {% endif %}
+
+    {% else %}
+    <p>No subject has been assigned to your account. Contact the administrator.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

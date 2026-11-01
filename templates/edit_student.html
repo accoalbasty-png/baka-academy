@@ -1,0 +1,177 @@
+
+{% extends "base.html" %}
+
+{% block title %}Edit Student - Baka Academy{% endblock %}
+
+{% block content %}
+
+<div class="page-container" style="max-width:900px; margin:30px auto; padding:20px;">
+
+    <h2>Edit Student Information</h2>
+
+    <p>Student ID: <strong>{{ student.student_id }}</strong></p>
+
+    <form method="POST"
+          action="{{ url_for('edit_student', student_id=student.id) }}"
+          enctype="multipart/form-data"
+          style="background:white; padding:25px; border-radius:10px;">
+
+        <h3>Student Information</h3>
+
+        <label for="full_name">Student Full Name *</label>
+        <input type="text"
+               id="full_name"
+               name="full_name"
+               value="{{ student.full_name }}"
+               required
+               maxlength="150"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <label for="sex">Sex</label>
+        <select id="sex"
+                name="sex"
+                style="width:100%; padding:10px; margin:8px 0 18px;">
+            <option value="" {% if not student.sex %}selected{% endif %}>Not selected</option>
+            <option value="M" {% if student.sex == "M" %}selected{% endif %}>Male</option>
+            <option value="F" {% if student.sex == "F" %}selected{% endif %}>Female</option>
+        </select>
+
+        <label for="age">Age</label>
+        <input type="number"
+               id="age"
+               name="age"
+               value="{{ student.age if student.age is not none else '' }}"
+               min="1"
+               max="100"
+               placeholder="Enter age in years"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <label for="grade">Grade *</label>
+        <select id="grade"
+                name="grade"
+                required
+                style="width:100%; padding:10px; margin:8px 0 18px;">
+
+            <option value="">Select grade</option>
+
+            {% for grade in ["9", "10", "11", "12"] %}
+                <option value="{{ grade }}"
+                    {% if student.grade|string == grade %}selected{% endif %}>
+                    Grade {{ grade }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <label for="section">Section *</label>
+        <input type="text"
+               id="section"
+               name="section"
+               value="{{ student.section }}"
+               required
+               maxlength="10"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <label for="stream">Academic Stream</label>
+        <select id="stream"
+                name="stream"
+                style="width:100%; padding:10px; margin:8px 0 18px;">
+
+            <option value="">Not selected</option>
+
+            <option value="Natural Science"
+                {% if student.stream == "Natural Science" %}selected{% endif %}>
+                Natural Science
+            </option>
+
+            <option value="Social Science"
+                {% if student.stream == "Social Science" %}selected{% endif %}>
+                Social Science
+            </option>
+
+        </select>
+
+        <label for="photo">Student Photograph</label>
+
+        {% if student.photo_filename %}
+            <p>Current photograph:</p>
+            <img
+                src="{{ url_for('static', filename='uploads/student_photos/' ~ student.photo_filename) }}"
+                alt="Current student photograph"
+                style="width:120px; height:150px; object-fit:cover; display:block; margin-bottom:10px;">
+        {% endif %}
+
+        <input type="file"
+               id="photo"
+               name="photo"
+               accept=".jpg,.jpeg,.png"
+               style="display:block; margin:8px 0 18px;">
+
+        <hr>
+
+        <h3>Family and Contact Information</h3>
+
+        <label for="family_contact_name">Family / Parent Contact Name</label>
+        <input type="text"
+               id="family_contact_name"
+               name="family_contact_name"
+               value="{{ student.family_contact_name or '' }}"
+               maxlength="150"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <label for="family_phone">Family Phone Number</label>
+        <input type="tel"
+               id="family_phone"
+               name="family_phone"
+               value="{{ student.family_phone or '' }}"
+               maxlength="30"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <label for="previous_school">Previous School</label>
+        <input type="text"
+               id="previous_school"
+               name="previous_school"
+               value="{{ student.previous_school or '' }}"
+               maxlength="150"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <hr>
+
+        <h3>Academic Year</h3>
+
+        <label for="academic_year_ec">Ethiopian Academic Year *</label>
+        <input type="text"
+               id="academic_year_ec"
+               name="academic_year_ec"
+               value="{{ student.academic_year_ec or '' }}"
+               required
+               maxlength="30"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <label for="academic_year_gc">Gregorian Academic Year</label>
+        <input type="text"
+               id="academic_year_gc"
+               name="academic_year_gc"
+               value="{{ student.academic_year_gc or '' }}"
+               maxlength="30"
+               style="width:100%; padding:10px; margin:8px 0 18px;">
+
+        <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+
+            <button type="submit"
+                    style="padding:12px 24px; cursor:pointer;">
+                Update Student
+            </button>
+
+            <a href="{{ url_for('student_profile', student_id=student.id) }}"
+               style="padding:12px 24px;">
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

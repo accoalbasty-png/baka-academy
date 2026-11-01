@@ -1,14 +1,185 @@
-
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>{% block title %}Baka Academy{% endblock %}</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        .main-header {
+            width: 100%;
+            margin: 0;
+            padding: 8px 12px;
+            background: #174b36;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .school-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .school-logo {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+
+        .brand-text h1 {
+            margin: 0;
+            color: white;
+            font-size: 23px;
+        }
+
+        .brand-text span {
+            color: #e1eee6;
+            font-size: 12px;
+        }
+
+        .main-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .main-navigation a {
+            color: white;
+            text-decoration: none;
+            padding: 9px 11px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .main-navigation a:hover {
+            background: #236b4c;
+        }
+
+        .main-navigation .logout-link {
+            background: #a52a2a;
+        }
+
+        .main-navigation .logout-link:hover {
+            background: #842020;
+        }
+
+        .back-navigation {
+            width: 100%;
+            min-height: 38px;
+            margin: 0;
+            padding: 3px 8px;
+            background: white;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            background: #174b36;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .back-button:hover {
+            background: #236b4c;
+        }
+
+        .back-navigation[hidden] {
+            display: none !important;
+        }
+
+        main {
+            display: block;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .notice {
+            margin: 8px;
+        }
+
+        footer {
+            width: 100%;
+            margin: 0;
+        }
+
+        @media (max-width: 1000px) {
+            .main-header {
+                flex-wrap: wrap;
+            }
+
+            .main-navigation {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .main-header {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .school-logo {
+                width: 46px;
+                height: 46px;
+            }
+
+            .brand-text h1 {
+                font-size: 20px;
+            }
+
+            .main-navigation {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 4px;
+            }
+
+            .main-navigation a {
+                padding: 8px;
+            }
+
+            .back-navigation {
+                padding: 3px 6px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -32,30 +203,43 @@
     </a>
 
     {% if session.get('user_id') %}
-    <nav class="main-navigation">
 
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        {% if request.endpoint != 'register_student' %}
 
-        {% if session.get('role') in ['admin', 'teacher'] %}
-        <a href="{{ url_for('marks') }}">Mark Entry</a>
+        <nav class="main-navigation">
+
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+
+            {% if session.get('role') in ['admin', 'teacher'] %}
+                <a href="{{ url_for('marks') }}">Mark Entry</a>
+            {% endif %}
+
+            {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin') }}">Administration</a>
+            {% endif %}
+
+            {% if session.get('role') in ['admin', 'student_management'] %}
+                <a href="{{ url_for('student_management') }}">Students</a>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
+
+        </nav>
+
         {% endif %}
 
-        {% if session.get('role') == 'admin' %}
-        <a href="{{ url_for('admin') }}">Administration</a>
-        {% endif %}
-
-        {% if session.get('role') in ['admin', 'student_management'] %}
-        <a href="{{ url_for('student_management') }}">Students</a>
-        {% endif %}
-
-        <a href="{{ url_for('logout') }}" class="logout-link">
-            Log out
-        </a>
-
-    </nav>
     {% endif %}
 
 </header>
+
+<div class="back-navigation" id="backNavigation" hidden>
+
+    <a href="#" class="back-button" id="backButton">
+        <span aria-hidden="true">←</span>
+        Back
+    </a>
+
+</div>
 
 <main>
 
@@ -73,6 +257,115 @@
     <p>BAKA ACADEMY</p>
     <span>School Management System · Ethiopia</span>
 </footer>
+
+<script>
+(function () {
+
+    const dashboardPath = {{ url_for('dashboard')|tojson }};
+    const studentsPath = {{ url_for('student_management')|tojson }};
+    const currentPath = window.location.pathname;
+
+    const backNavigation = document.getElementById("backNavigation");
+    const backButton = document.getElementById("backButton");
+
+    let backPath = null;
+
+    if (currentPath === dashboardPath || currentPath === "/login") {
+        backNavigation.hidden = true;
+        return;
+    }
+
+    if (
+        currentPath === "/admin" ||
+        currentPath === "/teacher/marks" ||
+        currentPath === studentsPath
+    ) {
+        backPath = dashboardPath;
+
+    } else if (
+        currentPath === "/students/register" ||
+        currentPath === "/students/list" ||
+        currentPath === "/students/results" ||
+        currentPath === "/students/left"
+    ) {
+        backPath = studentsPath;
+
+    } else {
+
+        const editMatch = currentPath.match(/^\/students\/(\d+)\/edit$/);
+
+        if (editMatch) {
+            backPath = "/students/" + editMatch[1];
+        }
+
+        const profileMatch = currentPath.match(/^\/students\/(\d+)$/);
+
+        if (profileMatch) {
+
+            const studentId = profileMatch[1];
+            const returnKey = "bakaStudentReturn_" + studentId;
+
+            let savedReturn = sessionStorage.getItem(returnKey);
+            let referrerPath = "";
+
+            try {
+
+                if (document.referrer) {
+
+                    const referrer = new URL(document.referrer);
+
+                    if (referrer.origin === window.location.origin) {
+                        referrerPath = referrer.pathname;
+                    }
+
+                }
+
+            } catch (error) {
+                referrerPath = "";
+            }
+
+            const allowedReturnPaths = [
+                "/students",
+                "/students/list",
+                "/students/results",
+                "/students/left"
+            ];
+
+            if (allowedReturnPaths.includes(referrerPath)) {
+
+                savedReturn = referrerPath;
+                sessionStorage.setItem(returnKey, savedReturn);
+
+            }
+
+            if (referrerPath === "/students/register") {
+
+                savedReturn = studentsPath;
+                sessionStorage.setItem(returnKey, savedReturn);
+
+            }
+
+            backPath = allowedReturnPaths.includes(savedReturn)
+                ? savedReturn
+                : studentsPath;
+
+        }
+
+    }
+
+    if (backPath) {
+
+        backButton.href = backPath;
+        backNavigation.hidden = false;
+
+    } else {
+
+        backNavigation.hidden = true;
+
+    }
+
+})();
+</script>
 
 </body>
 </html>

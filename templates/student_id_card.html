@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student ID Card - Baka Academy</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            background: #edf2f5;
+            font-family: Arial, sans-serif;
+            color: #173d58;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .instructions {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #536b7a;
+        }
+
+        .card {
+            width: 85.6mm;
+            height: 54mm;
+            position: relative;
+            overflow: hidden;
+            background: white;
+            border: 1px solid #d5e0e7;
+            border-radius: 3mm;
+            margin: 20px auto;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        }
+
+        /* OXFORD BLUE HEADER */
+
+        .front-header {
+            height: 13mm;
+            background: #002147;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3mm;
+            padding: 1.5mm 3mm;
+        }
+
+        .school-logo {
+            width: 10mm;
+            height: 10mm;
+            object-fit: contain;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .school-heading {
+            text-align: center;
+            flex: 1;
+        }
+
+        .school-heading h3 {
+            font-size: 12pt;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            color: white;
+        }
+
+        .school-heading p {
+            font-size: 6.5pt;
+            margin: 1mm 0 0;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* FRONT BODY */
+
+        .front-body {
+            height: 32mm;
+            display: flex;
+            align-items: center;
+            padding: 2mm 4mm;
+            gap: 3mm;
+        }
+
+        .student-details {
+            flex: 1;
+            text-align: center;
+            min-width: 0;
+        }
+
+        .student-details .label {
+            font-size: 6pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #52758a;
+            margin-bottom: 2mm;
+        }
+
+        .student-name {
+            font-size: 11pt;
+            font-weight: 800;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+            margin-bottom: 2mm;
+        }
+
+        .grade {
+            font-size: 9pt;
+            font-weight: bold;
+            margin-bottom: 2mm;
+        }
+
+        /* STUDENT PHOTO AND ID NUMBER */
+
+        .photo-section {
+            width: 19mm;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1mm;
+        }
+
+        .student-number {
+            width: 100%;
+            font-size: 6.5pt;
+            font-weight: bold;
+            color: #002147;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+
+        .student-photo {
+            width: 19mm;
+            height: 22mm;
+            object-fit: cover;
+            border: 1px solid #91b6c8;
+            border-radius: 1mm;
+            background: #edf3f6;
+        }
+
+        .photo-placeholder {
+            width: 19mm;
+            height: 22mm;
+            border: 1px solid #91b6c8;
+            background: #edf3f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 6pt;
+            color: #6b8798;
+        }
+
+        /* OXFORD BLUE FRONT FOOTER WITH ACADEMIC YEAR */
+
+        .front-footer {
+            height: 9mm;
+            background: #002147;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 7.5pt;
+            font-weight: bold;
+            gap: 2mm;
+        }
+
+        .academic-year-label {
+            color: white;
+        }
+
+        .back-body {
+            height: 43mm;
+            padding: 7mm 6mm 3mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .return-message {
+            font-size: 10pt;
+            line-height: 1.65;
+            font-weight: 600;
+            color: #23485e;
+        }
+
+        .back-school {
+            font-size: 11pt;
+            font-weight: 800;
+            margin-top: 3mm;
+            color: #173d58;
+        }
+
+        /* OXFORD BLUE BACK FOOTER */
+
+        .back-footer {
+            height: 11mm;
+            background: #002147;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 7.5pt;
+            font-weight: bold;
+            padding: 1mm 3mm;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px auto;
+        }
+
+        .controls button {
+            border: none;
+            background: #002147;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background: #173d58;
+        }
+
+        .controls button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .back-button {
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+            color: #002147;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .controls,
+            h2,
+            .instructions,
+            .back-button {
+                display: none !important;
+            }
+
+            .page {
+                max-width: none;
+            }
+
+            .card {
+                margin: 10mm auto;
+                box-shadow: none;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .front-header,
+            .front-footer,
+            .back-footer {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page">
+
+    <h2>Baka Academy Student ID Card</h2>
+
+    <p class="instructions">
+        Front and back ID card preview. Export each side as a high-quality JPG.
+    </p>
+
+    <!-- FRONT OF ID CARD -->
+
+    <div class="card" id="frontCard">
+
+        <div class="front-header">
+            <img
+                class="school-logo"
+                src="{{ url_for('static', filename='logo.jpg') }}"
+                alt="Baka Academy Logo"
+                crossorigin="anonymous"
+            >
+
+            <div class="school-heading">
+                <h3>BAKA ACADEMY</h3>
+                <p>STUDENT ID CARD</p>
+            </div>
+        </div>
+
+        <div class="front-body">
+
+            <div class="student-details">
+
+                <div class="label">STUDENT NAME</div>
+
+                <div class="student-name">
+                    {{ student.full_name }}
+                </div>
+
+                <div class="grade">
+                    Grade {{ student.grade }}
+                    {% if student.section %}
+                        - Section {{ student.section }}
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <div class="photo-section">
+
+                <div class="student-number">
+                    ID: {{ student.student_id }}
+                </div>
+
+                {% if student.photo_filename %}
+                    <img
+                        class="student-photo"
+                        src="{{ url_for('static', filename='uploads/student_photos/' ~ student.photo_filename) }}"
+                        alt="Student Photo"
+                        crossorigin="anonymous"
+                    >
+                {% else %}
+                    <div class="photo-placeholder">
+                        STUDENT<br>PHOTO
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="front-footer">
+            <span class="academic-year-label">E.C. ACADEMIC YEAR:</span>
+            <span>{{ student.academic_year_ec or "Not provided" }}</span>
+        </div>
+
+    </div>
+
+
+    <!-- BACK OF ID CARD -->
+
+    <div class="card" id="backCard">
+
+        <div class="back-body">
+            <div>
+
+                <div class="return-message">
+                    The holder of this ID card is a student
+                    of Baka Academy.
+
+                    <br><br>
+
+                    If this card is found, please return it
+                    to the school.
+                </div>
+
+                <div class="back-school">
+                    BAKA ACADEMY
+                </div>
+
+            </div>
+        </div>
+
+        <div class="back-footer">
+            Family Phone:
+            {{ student.family_phone or "Not provided" }}
+        </div>
+
+    </div>
+
+
+    <!-- EXPORT BUTTONS -->
+
+    <div class="controls">
+
+        <button onclick="downloadCard('frontCard', 'front', this)">
+            Download Front JPG
+        </button>
+
+        <button onclick="downloadCard('backCard', 'back', this)">
+            Download Back JPG
+        </button>
+
+        <button onclick="window.print()">
+            Print ID Card
+        </button>
+
+    </div>
+
+    <a
+        class="back-button"
+        href="{{ url_for('student_management') }}"
+    >
+        ← Back to Student List
+    </a>
+
+</div>
+
+
+<script>
+async function downloadCard(cardId, side, button) {
+
+    const card = document.getElementById(cardId);
+
+    button.disabled = true;
+    button.textContent = "Preparing JPG...";
+
+    try {
+
+        await document.fonts.ready;
+
+        const images = Array.from(card.querySelectorAll("img"));
+
+        await Promise.all(images.map(function(image) {
+
+            if (image.complete && image.naturalWidth > 0) {
+                return Promise.resolve();
+            }
+
+            return new Promise(function(resolve) {
+                image.onload = resolve;
+                image.onerror = resolve;
+            });
+
+        }));
+
+        const canvas = await html2canvas(card, {
+            scale: 3.54,
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            logging: false
+        });
+
+        const link = document.createElement("a");
+
+        link.download =
+            "{{ student.student_id }}" + "_" + side + "_id_card.jpg";
+
+        link.href = canvas.toDataURL("image/jpeg", 0.98);
+
+        link.click();
+
+    } catch (error) {
+
+        alert(
+            "Could not create the JPG. Please check the logo and student photo."
+        );
+
+        console.error(error);
+
+    } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            side === "front"
+                ? "Download Front JPG"
+                : "Download Back JPG";
+    }
+}
+</script>
+
+</body>
+</html>

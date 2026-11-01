@@ -1,60 +1,671 @@
 
 {% extends "base.html" %}
 
+{% block title %}Student Management - Baka Academy{% endblock %}
+
 {% block content %}
-<h2>Student Management</h2>
 
-<section class="panel">
-    <h3>Registered Students</h3>
+<style>
+    /* Connect the student dashboard directly to the shared header/navigation */
+    body:has(.student-dashboard) main {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
 
-    <label for="studentSearch">Search by student name or ID</label>
-    <input
-        type="text"
-        id="studentSearch"
-        placeholder="Type a student name or ID..."
-        oninput="searchStudents()"
-    >
+    .student-dashboard,
+    .student-dashboard * {
+        box-sizing: border-box;
+    }
 
-    <p>Total registered students: <strong>{{ students|length }}</strong></p>
+    .student-dashboard {
+        display: flex;
+        width: 100%;
+        min-height: calc(100vh - 130px);
+        margin: 0;
+        padding: 0;
+        background: #f4f7f5;
+        position: relative;
+    }
 
-    <div style="overflow-x:auto;">
-        <table id="studentTable">
-            <thead>
-                <tr>
-                    <th>Student ID</th>
-                    <th>Full Name</th>
-                    <th>Grade</th>
-                    <th>Class</th>
-                </tr>
-            </thead>
+    /* SIDEBAR */
+    .student-sidebar {
+        width: 250px;
+        min-width: 250px;
+        background: #174b36;
+        color: white;
+        padding: 24px 13px;
+        transition: width 0.25s ease, min-width 0.25s ease;
+        overflow: hidden;
+    }
 
-            <tbody>
-                {% for student in students %}
-                <tr>
-                    <td>{{ student.student_id }}</td>
-                    <td>{{ student.full_name }}</td>
-                    <td>{{ student.grade }}</td>
-                    <td>{{ student.section }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4">No students registered yet.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
+    .student-sidebar.collapsed {
+        width: 70px;
+        min-width: 70px;
+    }
+
+    .sidebar-heading {
+        font-size: 16px;
+        font-weight: 700;
+        padding: 0 10px 20px;
+        border-bottom: 1px solid #ffffff35;
+        margin-bottom: 18px;
+        white-space: nowrap;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-height: 48px;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 7px;
+        margin-bottom: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: background 0.2s ease;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+        background: #ffffff25;
+        color: white;
+    }
+
+    .sidebar-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 27px;
+        width: 27px;
+        height: 27px;
+        border-radius: 6px;
+        background: #ffffff18;
+        font-size: 19px;
+        line-height: 1;
+    }
+
+    .student-sidebar.collapsed .sidebar-heading,
+    .student-sidebar.collapsed .sidebar-link span:not(.sidebar-icon) {
+        display: none;
+    }
+
+    .student-sidebar.collapsed .sidebar-link {
+        justify-content: center;
+        padding: 10px 5px;
+    }
+
+    .student-sidebar.collapsed .sidebar-icon {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+        font-size: 21px;
+    }
+
+    /* SIDEBAR TOGGLE */
+    .sidebar-toggle {
+        position: absolute;
+        top: 18px;
+        left: 235px;
+        z-index: 5;
+        width: 30px;
+        height: 30px;
+        border: 2px solid #174b36;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #174b36;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: left 0.25s ease;
+    }
+
+    .student-sidebar.collapsed ~ .sidebar-toggle {
+        left: 55px;
+    }
+
+    /* MAIN CONTENT */
+    .student-main {
+        flex: 1;
+        min-width: 0;
+        padding: 25px 28px;
+    }
+
+    .student-main-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 23px;
+    }
+
+    .student-main-header h2 {
+        margin: 0;
+        color: #174b36;
+        font-size: 26px;
+    }
+
+    .student-main-header p {
+        margin: 6px 0 0;
+        color: #718078;
+        font-size: 13px;
+    }
+
+    .register-student-button {
+        display: inline-block;
+        padding: 12px 18px;
+        background: #174b36;
+        color: white;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .register-student-button:hover {
+        background: #236b4c;
+        color: white;
+    }
+
+    /* STATISTICS */
+    .student-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 17px;
+        margin-bottom: 24px;
+    }
+
+    .student-stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px #17203310;
+        border-left: 4px solid #174b36;
+    }
+
+    .student-stat-card h4 {
+        margin: 0 0 12px;
+        color: #718078;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .student-stat-card strong {
+        display: block;
+        color: #174b36;
+        font-size: 29px;
+    }
+
+    .student-stat-card small {
+        color: #8b9890;
+        font-size: 11px;
+    }
+
+    /* CHART AND RECENT STUDENTS */
+    .student-dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 20px;
+    }
+
+    .dashboard-panel {
+        background: white;
+        border-radius: 10px;
+        padding: 21px;
+        box-shadow: 0 2px 10px #17203310;
+        min-width: 0;
+    }
+
+    .dashboard-panel h3 {
+        color: #174b36;
+        margin: 0 0 20px;
+        font-size: 17px;
+    }
+
+    .grade-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .grade-chart-row {
+        display: grid;
+        grid-template-columns: 65px minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
+    }
+
+    .grade-label {
+        color: #45584b;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .grade-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .grade-bar-line {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .grade-bar-name {
+        width: 55px;
+        font-size: 11px;
+        color: #718078;
+    }
+
+    .grade-bar-track {
+        height: 12px;
+        flex: 1;
+        background: #edf1ee;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .grade-bar-fill {
+        height: 100%;
+        border-radius: 20px;
+    }
+
+    .male-fill {
+        background: #3777a8;
+    }
+
+    .female-fill {
+        background: #c27c9c;
+    }
+
+    .grade-bar-count {
+        width: 24px;
+        text-align: right;
+        font-size: 11px;
+        color: #45584b;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 18px;
+        margin-top: 22px;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #718078;
+        font-size: 11px;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    /* RECENT STUDENTS */
+    .recent-students {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .recent-student-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 13px 0;
+        border-bottom: 1px solid #edf1ee;
+    }
+
+    .recent-student-row:last-child {
+        border-bottom: none;
+    }
+
+    .recent-student-info {
+        min-width: 0;
+    }
+
+    .recent-student-info strong {
+        display: block;
+        color: #34463a;
+        font-size: 13px;
+        margin-bottom: 4px;
+        overflow-wrap: anywhere;
+    }
+
+    .recent-student-info small {
+        color: #87938b;
+        font-size: 11px;
+    }
+
+    .recent-student-link {
+        color: #174b36;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .recent-student-link:hover {
+        text-decoration: underline;
+    }
+
+    .empty-dashboard-message {
+        color: #87938b;
+        font-size: 13px;
+        padding: 15px 0;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1000px) {
+        .student-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .student-dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 650px) {
+        .student-dashboard {
+            min-height: calc(100vh - 100px);
+        }
+
+        .student-sidebar {
+            width: 65px;
+            min-width: 65px;
+            padding: 15px 7px;
+        }
+
+        .student-sidebar .sidebar-heading,
+        .student-sidebar .sidebar-link span:not(.sidebar-icon) {
+            display: none;
+        }
+
+        .student-sidebar .sidebar-link {
+            justify-content: center;
+            padding: 10px 5px;
+        }
+
+        .sidebar-toggle {
+            display: none;
+        }
+
+        .student-main {
+            padding: 15px 10px;
+        }
+
+        .student-main-header h2 {
+            font-size: 21px;
+        }
+
+        .student-stats {
+            gap: 10px;
+        }
+
+        .student-stat-card {
+            padding: 14px;
+        }
+
+        .student-stat-card strong {
+            font-size: 23px;
+        }
+
+        .dashboard-panel {
+            padding: 15px;
+        }
+    }
+</style>
+
+<div class="student-dashboard">
+
+    <aside class="student-sidebar" id="studentSidebar">
+
+        <div class="sidebar-heading">
+            Student Management
+        </div>
+
+        <a class="sidebar-link"
+           href="{{ url_for('register_student') }}"
+           title="Register New Student">
+
+            <span class="sidebar-icon" aria-hidden="true">👤</span>
+            <span>Register New Student</span>
+
+        </a>
+
+        <a class="sidebar-link"
+           href="{{ url_for('student_list') }}"
+           title="Student List">
+
+            <span class="sidebar-icon" aria-hidden="true">📋</span>
+            <span>Student List</span>
+
+        </a>
+
+        <a class="sidebar-link"
+           href="{{ url_for('student_results') }}"
+           title="Student Result List">
+
+            <span class="sidebar-icon" aria-hidden="true">📊</span>
+            <span>Student Result List</span>
+
+        </a>
+
+        <a class="sidebar-link"
+           href="{{ url_for('left_students') }}"
+           title="Left Students">
+
+            <span class="sidebar-icon" aria-hidden="true">🚪</span>
+            <span>Left Students</span>
+
+        </a>
+
+    </aside>
+
+    <button
+        type="button"
+        class="sidebar-toggle"
+        id="sidebarToggle"
+        aria-label="Toggle sidebar">
+        ‹
+    </button>
+
+    <section class="student-main">
+
+        <div class="student-main-header">
+
+            <div>
+                <h2>Student Management</h2>
+                <p>Baka Academy student information and statistics.</p>
+            </div>
+
+            <a href="{{ url_for('register_student') }}"
+               class="register-student-button">
+                + Register New Student
+            </a>
+
+        </div>
+
+        <div class="student-stats">
+
+            <div class="student-stat-card">
+                <h4>Active Students</h4>
+                <strong>{{ total_students }}</strong>
+                <small>Currently enrolled students</small>
+            </div>
+
+            <div class="student-stat-card">
+                <h4>Male Students</h4>
+                <strong>{{ male_count }}</strong>
+                <small>Active male students</small>
+            </div>
+
+            <div class="student-stat-card">
+                <h4>Female Students</h4>
+                <strong>{{ female_count }}</strong>
+                <small>Active female students</small>
+            </div>
+
+            <div class="student-stat-card">
+                <h4>Left Students</h4>
+                <strong>{{ departed_count }}</strong>
+                <small>Students no longer active</small>
+            </div>
+
+        </div>
+
+        <div class="student-dashboard-grid">
+
+            <section class="dashboard-panel">
+
+                <h3>Male and Female Students by Grade</h3>
+
+                <div class="grade-chart">
+
+                    {% for grade in grades %}
+
+                    {% set male = male_by_grade.get(grade, 0) %}
+                    {% set female = female_by_grade.get(grade, 0) %}
+                    {% set maximum = [male, female, 1]|max %}
+                    {% set scale = 100 / maximum %}
+
+                    <div class="grade-chart-row">
+
+                        <div class="grade-label">
+                            Grade {{ grade }}
+                        </div>
+
+                        <div class="grade-bars">
+
+                            <div class="grade-bar-line">
+                                <span class="grade-bar-name">Male</span>
+
+                                <div class="grade-bar-track">
+                                    <div
+                                        class="grade-bar-fill male-fill"
+                                        style="width: {{ male * scale }}%;">
+                                    </div>
+                                </div>
+
+                                <span class="grade-bar-count">{{ male }}</span>
+                            </div>
+
+                            <div class="grade-bar-line">
+                                <span class="grade-bar-name">Female</span>
+
+                                <div class="grade-bar-track">
+                                    <div
+                                        class="grade-bar-fill female-fill"
+                                        style="width: {{ female * scale }}%;">
+                                    </div>
+                                </div>
+
+                                <span class="grade-bar-count">{{ female }}</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="chart-legend">
+
+                    <div class="legend-item">
+                        <span class="legend-dot male-fill"></span>
+                        Male
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="legend-dot female-fill"></span>
+                        Female
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="dashboard-panel">
+
+                <h3>Recently Registered Students</h3>
+
+                <div class="recent-students">
+
+                    {% for student in recent_students %}
+
+                    <div class="recent-student-row">
+
+                        <div class="recent-student-info">
+                            <strong>{{ student.full_name }}</strong>
+
+                            <small>
+                                {{ student.student_id }}
+                                · Grade {{ student.grade }}
+                                · Class {{ student.section }}
+                            </small>
+                        </div>
+
+                        <a
+                            href="{{ url_for('student_profile', student_id=student.id) }}"
+                            class="recent-student-link">
+                            View
+                        </a>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-dashboard-message">
+                        No students have been registered yet.
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <a
+                        href="{{ url_for('student_list') }}"
+                        class="recent-student-link">
+                        View All Students →
+                    </a>
+                </div>
+
+            </section>
+
+        </div>
+
+    </section>
+
+</div>
 
 <script>
-function searchStudents() {
-    const search = document.getElementById("studentSearch").value.toLowerCase();
-    const rows = document.querySelectorAll("#studentTable tbody tr");
+    const sidebar = document.getElementById("studentSidebar");
+    const toggleButton = document.getElementById("sidebarToggle");
 
-    rows.forEach(function(row) {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(search) ? "" : "none";
-    });
-}
+    if (sidebar && toggleButton) {
+        toggleButton.addEventListener("click", function () {
+            sidebar.classList.toggle("collapsed");
+
+            toggleButton.textContent =
+                sidebar.classList.contains("collapsed") ? "›" : "‹";
+        });
+    }
 </script>
+
 {% endblock %}

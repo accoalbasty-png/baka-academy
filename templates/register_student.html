@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Register New Student - Baka Academy{% endblock %}
+
+{% block content %}
+
+<style>
+    .student-list-page {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 24px 28px;
+        box-sizing: border-box;
+    }
+
+    .student-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .student-list-header h2 {
+        color: #174b36;
+        margin: 0;
+        font-size: 26px;
+    }
+
+    .student-list-header p {
+        color: #64756a;
+        margin: 5px 0 0;
+        font-size: 13px;
+    }
+
+    .register-card {
+        width: 100%;
+        background: white;
+        border-radius: 11px;
+        padding: 25px;
+        box-shadow: 0 2px 10px #17203312;
+        box-sizing: border-box;
+    }
+
+    .form-section {
+        margin-bottom: 25px;
+    }
+
+    .form-section h3 {
+        color: #174b36;
+        font-size: 18px;
+        margin: 0 0 18px;
+        padding-bottom: 11px;
+        border-bottom: 1px solid #e1e9e3;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 22px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        color: #34463a;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid #cbd8ce;
+        border-radius: 6px;
+        background: white;
+        color: #34463a;
+        font-size: 13px;
+        box-sizing: border-box;
+        margin: 0;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #174b36;
+        box-shadow: 0 0 0 2px #174b3615;
+    }
+
+    .form-group input[type="file"] {
+        padding: 8px;
+    }
+
+    .form-hint {
+        color: #64756a;
+        font-size: 12px;
+        margin-top: 7px;
+    }
+
+    .year-message {
+        color: #52758a;
+        font-size: 12px;
+        margin: 12px 0 0;
+    }
+
+    .form-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #e1e9e3;
+    }
+
+    .submit-button {
+        background: #174b36;
+        color: white;
+        border: none;
+        padding: 12px 22px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .submit-button:hover {
+        background: #236b4c;
+    }
+
+    .cancel-button {
+        display: inline-block;
+        background: #e8f2ec;
+        color: #174b36;
+        padding: 12px 22px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .cancel-button:hover {
+        background: #d5e7da;
+    }
+
+    @media (max-width: 700px) {
+        .student-list-page {
+            padding: 14px 9px;
+        }
+
+        .register-card {
+            padding: 15px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group.full-width {
+            grid-column: auto;
+        }
+    }
+</style>
+
+<div class="student-list-page">
+
+    <div class="student-list-header">
+        <div>
+            <h2>New Student Registration</h2>
+            <p>Enter the student's information below. Fields marked * are required.</p>
+        </div>
+
+        <a href="{{ url_for('student_management') }}"
+           class="cancel-button">
+            ← Student Management
+        </a>
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('register_student') }}"
+          enctype="multipart/form-data"
+          class="register-card">
+
+        <div class="form-section">
+
+            <h3>Student Information</h3>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="full_name">Student Full Name *</label>
+                    <input type="text"
+                           id="full_name"
+                           name="full_name"
+                           required
+                           maxlength="150">
+                </div>
+
+                <div class="form-group">
+                    <label for="sex">Sex</label>
+                    <select id="sex" name="sex">
+                        <option value="">Not selected</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number"
+                           id="age"
+                           name="age"
+                           min="1"
+                           max="100"
+                           placeholder="Enter age in years">
+                </div>
+
+                <div class="form-group">
+                    <label for="grade">Grade *</label>
+                    <select id="grade" name="grade" required>
+                        <option value="">Select grade</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="section">Section *</label>
+                    <input type="text"
+                           id="section"
+                           name="section"
+                           placeholder="Example: A"
+                           required
+                           maxlength="10">
+                </div>
+
+                <div class="form-group">
+                    <label for="stream">Academic Stream</label>
+                    <select id="stream" name="stream">
+                        <option value="">Not applicable / Not selected</option>
+                        <option value="Natural Science">Natural Science</option>
+                        <option value="Social Science">Social Science</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="photo">Student Photograph</label>
+                    <input type="file"
+                           id="photo"
+                           name="photo"
+                           accept=".jpg,.jpeg,.png">
+                    <span class="form-hint">Accepted formats: JPG, JPEG and PNG.</span>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="form-section">
+
+            <h3>Family and Contact Information</h3>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="family_contact_name">Family / Parent Contact Name</label>
+                    <input type="text"
+                           id="family_contact_name"
+                           name="family_contact_name"
+                           maxlength="150">
+                </div>
+
+                <div class="form-group">
+                    <label for="family_phone">Family Phone Number</label>
+                    <input type="tel"
+                           id="family_phone"
+                           name="family_phone"
+                           maxlength="30">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="previous_school">Previous School</label>
+                    <input type="text"
+                           id="previous_school"
+                           name="previous_school"
+                           maxlength="150">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="form-section">
+
+            <h3>Academic Year</h3>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="academic_year_ec">Ethiopian Academic Year *</label>
+                    <input type="text"
+                           id="academic_year_ec"
+                           name="academic_year_ec"
+                           placeholder="Example: 2019"
+                           required
+                           maxlength="30">
+                </div>
+
+                <div class="form-group">
+                    <label for="academic_year_gc">Gregorian Academic Year</label>
+                    <input type="text"
+                           id="academic_year_gc"
+                           name="academic_year_gc"
+                           placeholder="Example: 2026/2027"
+                           maxlength="30">
+                </div>
+
+            </div>
+
+            <p id="yearMessage" class="year-message">
+                Enter either academic year. The other field will fill automatically.
+            </p>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button type="submit" class="submit-button">
+                Register Student
+            </button>
+
+            <a href="{{ url_for('student_management') }}"
+               class="cancel-button">
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+const ecInput = document.getElementById("academic_year_ec");
+const gcInput = document.getElementById("academic_year_gc");
+const yearMessage = document.getElementById("yearMessage");
+
+function convertEcToGc() {
+    const ecYear = ecInput.value.trim();
+
+    if (!/^\d{4}$/.test(ecYear)) {
+        gcInput.value = "";
+        yearMessage.textContent = "Enter a valid four-digit Ethiopian year.";
+        return;
+    }
+
+    const year = Number(ecYear);
+
+    if (year < 1900 || year > 2200) {
+        gcInput.value = "";
+        yearMessage.textContent = "Please enter a valid Ethiopian academic year.";
+        return;
+    }
+
+    gcInput.value = `${year + 7}/${year + 8}`;
+    yearMessage.textContent = "Gregorian academic year filled automatically.";
+}
+
+function convertGcToEc() {
+    const gcYear = gcInput.value.trim();
+
+    const match = gcYear.match(/^(\d{4})(?:\s*[\/-]\s*(\d{4}))?$/);
+
+    if (!match) {
+        ecInput.value = "";
+        yearMessage.textContent = "Enter the Gregorian year as 2026 or 2026/2027.";
+        return;
+    }
+
+    const firstYear = Number(match[1]);
+    const secondYear = match[2] ? Number(match[2]) : firstYear + 1;
+
+    if (
+        firstYear < 1900 ||
+        firstYear > 2200 ||
+        secondYear !== firstYear + 1
+    ) {
+        ecInput.value = "";
+        yearMessage.textContent = "Please enter a valid Gregorian academic year.";
+        return;
+    }
+
+    ecInput.value = String(firstYear - 7);
+    yearMessage.textContent = "Ethiopian academic year filled automatically.";
+}
+
+ecInput.addEventListener("input", function () {
+    if (ecInput.value.trim() === "") {
+        gcInput.value = "";
+        yearMessage.textContent = "Enter either academic year. The other field will fill automatically.";
+    } else {
+        convertEcToGc();
+    }
+});
+
+gcInput.addEventListener("input", function () {
+    if (gcInput.value.trim() === "") {
+        ecInput.value = "";
+        yearMessage.textContent = "Enter either academic year. The other field will fill automatically.";
+    } else {
+        convertGcToEc();
+    }
+});
+</script>
+
+{% endblock %}
