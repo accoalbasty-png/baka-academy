@@ -40,6 +40,137 @@ migrate = Migrate(app, db)
 
 
 # ==================================================
+# SUBJECT CONFIGURATION
+# ==================================================
+
+SUBJECTS_BY_GRADE = {
+    "9": [
+        "English",
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "Geography",
+        "History",
+        "Citizenship Education",
+        "Information Technology (IT)",
+        "Amharic",
+        "Oromo",
+        "Physical Education / HPE"
+    ],
+    "10": [
+        "English",
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "Geography",
+        "History",
+        "Citizenship Education",
+        "Information Technology (IT)",
+        "Amharic",
+        "Oromo",
+        "Physical Education / HPE"
+    ],
+    "11": {
+        "Natural Sciences": [
+            "English",
+            "Mathematics",
+            "Physics",
+            "Chemistry",
+            "Biology",
+            "Information Technology (IT)",
+            "Agriculture",
+            "Physical Education / Common Courses"
+        ],
+        "Social Sciences": [
+            "English",
+            "Mathematics",
+            "Geography",
+            "History",
+            "Economics",
+            "Information Technology (IT)",
+            "Citizenship / Civics Education",
+            "Physical Education / Common Courses"
+        ]
+    },
+    "12": {
+        "Natural Sciences": [
+            "English",
+            "Mathematics",
+            "Physics",
+            "Chemistry",
+            "Biology",
+            "Information Technology (IT)",
+            "Agriculture",
+            "Physical Education / Common Courses"
+        ],
+        "Social Sciences": [
+            "English",
+            "Mathematics",
+            "Geography",
+            "History",
+            "Economics",
+            "Information Technology (IT)",
+            "Citizenship / Civics Education",
+            "Physical Education / Common Courses"
+        ]
+    }
+}
+
+VALID_GRADES = ["9", "10", "11", "12"]
+VALID_SECTIONS = ["A", "B", "C", "D"]
+VALID_STREAMS = ["Natural Sciences", "Social Sciences"]
+
+
+def normalize_stream(value):
+    """Convert common stream labels to the saved standard value."""
+    value = (value or "").strip().lower()
+
+    if value in ["natural", "natural science", "natural sciences"]:
+        return "Natural Sciences"
+
+    if value in ["social", "social science", "social sciences"]:
+        return "Social Sciences"
+
+    return None
+
+
+def subjects_for_assignment(grade, stream=None):
+    grade = str(grade)
+
+    if grade in ["9", "10"]:
+        return SUBJECTS_BY_GRADE[grade]
+
+    if grade in ["11", "12"]:
+        normalized = normalize_stream(stream)
+
+        if normalized:
+            return SUBJECTS_BY_GRADE[grade][normalized]
+
+    return []
+
+
+def valid_assignment_subject(grade, stream, subject):
+    if not subject:
+        return True
+
+    return subject in subjects_for_assignment(grade, stream)
+
+
+def student_stream_matches(student, assignment):
+    """Check that a Grade 11/12 student belongs to the assignment stream."""
+    if student.grade in ["9", "10"]:
+        return True
+
+    return (
+        normalize_stream(student.stream)
+        == normalize_stream(assignment.stream)
+        and normalize_stream(assignment.stream) is not None
+    )
+
+
+# ==================================================
 # DATABASE MODELS
 # ==================================================
 
@@ -51,6 +182,11 @@ class User(db.Model):
     is_active = db.Column(
         db.Boolean, nullable=False, default=True, server_default="1"
     )
+
+    teacher_name = db.Column(db.String(150))
+
+    class_teacher_grade = db.Column(db.String(10))
+    class_teacher_section = db.Column(db.String(10))
 
 
 class Student(db.Model):
@@ -79,24 +215,33 @@ class Student(db.Model):
 
 class Assignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     teacher_id = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )
+
     grade = db.Column(db.String(10), nullable=False)
     section = db.Column(db.String(10), nullable=False)
-    subject = db.Column(db.String(80), nullable=False)
+
+    # Nullable to preserve all existing assignments during migration.
+    stream = db.Column(db.String(50), nullable=True)
+
+    subject = db.Column(db.String(80), nullable=True)
 
 
 class Mark(db.Model):
     """Legacy marks are preserved."""
 
     id = db.Column(db.Integer, primary_key=True)
+
     student_id = db.Column(
         db.Integer, db.ForeignKey("student.id"), nullable=False
     )
+
     teacher_id = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )
+
     subject = db.Column(db.String(80), nullable=False)
     term = db.Column(db.String(20), nullable=False)
     score = db.Column(db.Integer, nullable=False)
@@ -112,6 +257,7 @@ class AssessmentMark(db.Model):
     student_id = db.Column(
         db.Integer, db.ForeignKey("student.id"), nullable=False
     )
+
     teacher_id = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )
@@ -129,6 +275,7 @@ class AssessmentMark(db.Model):
     created_at = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow
     )
+
     updated_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -148,12 +295,16 @@ class AssessmentMark(db.Model):
             self.quiz2,
             self.final
         ]
-        return round(sum(score or 0 for score in scores), 2)
+
+        return round(
+            sum(score or 0 for score in scores), 2
+        )
 
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+
     is_active = db.Column(
         db.Boolean, nullable=False, default=True, server_default="1"
     )
@@ -161,10 +312,15 @@ class Subject(db.Model):
 
 class AcademicYear(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     academic_year_ec = db.Column(
         db.String(30), unique=True, nullable=False
     )
-    academic_year_gc = db.Column(db.String(30), nullable=False)
+
+    academic_year_gc = db.Column(
+        db.String(30), nullable=False
+    )
+
     is_current = db.Column(
         db.Boolean, nullable=False, default=False, server_default="0"
     )
@@ -213,7 +369,9 @@ def student_staff_only(fn):
     def wrapper(*args, **kwargs):
         user = db.session.get(User, session["user_id"])
 
-        if not user or user.role not in ["admin", "student_management"]:
+        if not user or user.role not in [
+            "admin", "student_management"
+        ]:
             flash("Student Management access required.")
             return redirect(url_for("dashboard"))
 
@@ -235,8 +393,12 @@ def allowed_photo(filename):
 
 
 def generate_student_id():
-    last_student = Student.query.order_by(Student.id.desc()).first()
+    last_student = Student.query.order_by(
+        Student.id.desc()
+    ).first()
+
     next_number = last_student.id + 1 if last_student else 1
+
     return f"BA-{next_number:05d}"
 
 
@@ -255,10 +417,14 @@ def get_student_form_data():
         "family_contact_name": request.form.get(
             "family_contact_name", ""
         ).strip(),
-        "family_phone": request.form.get("family_phone", "").strip(),
+        "family_phone": request.form.get(
+            "family_phone", ""
+        ).strip(),
         "grade": request.form.get("grade", "").strip(),
         "section": request.form.get("section", "").strip(),
-        "previous_school": request.form.get("previous_school", "").strip(),
+        "previous_school": request.form.get(
+            "previous_school", ""
+        ).strip(),
         "stream": request.form.get("stream", "").strip(),
         "academic_year_ec": request.form.get(
             "academic_year_ec", ""
@@ -292,7 +458,10 @@ def valid_student_form_data(data):
 
 def save_student_photo(photo, filename):
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+
+    photo.save(
+        os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    )
 
 
 def get_school_subject_names():
@@ -322,6 +491,16 @@ def normalize_semester(value):
     return None
 
 
+def save_subject_if_new(subject_name):
+    if not subject_name:
+        return
+
+    subject = Subject.query.filter_by(name=subject_name).first()
+
+    if not subject:
+        db.session.add(Subject(name=subject_name))
+
+
 # ==================================================
 # HOME AND LOGIN
 # ==================================================
@@ -330,6 +509,7 @@ def normalize_semester(value):
 def home():
     if session.get("user_id"):
         return redirect(url_for("dashboard"))
+
     return redirect(url_for("login"))
 
 
@@ -349,6 +529,7 @@ def login():
             session.clear()
             session["user_id"] = user.id
             session["role"] = user.role
+
             return redirect(url_for("dashboard"))
 
         flash("Incorrect username or password.")
@@ -370,6 +551,7 @@ def logout():
 @logged_in
 def dashboard():
     user = db.session.get(User, session["user_id"])
+
     return render_template("dashboard.html", user=user)
 
 
@@ -386,21 +568,22 @@ def marks():
         flash("You are not allowed to enter marks.")
         return redirect(url_for("dashboard"))
 
-    assignments = (
-        Assignment.query.order_by(
+    if user.role == "admin":
+        assignments = Assignment.query.order_by(
             Assignment.grade,
             Assignment.section,
+            Assignment.stream,
             Assignment.subject
         ).all()
-        if user.role == "admin"
-        else Assignment.query.filter_by(
+    else:
+        assignments = Assignment.query.filter_by(
             teacher_id=user.id
         ).order_by(
             Assignment.grade,
             Assignment.section,
+            Assignment.stream,
             Assignment.subject
         ).all()
-    )
 
     assignment_id = request.values.get("assignment_id", type=int)
 
@@ -412,14 +595,27 @@ def marks():
     term_value = request.values.get("term", "Semester 1")
     term = normalize_semester(term_value) or "Semester 1"
 
-    students = (
-        Student.query.filter_by(
+    students = []
+
+    if selected:
+        student_query = Student.query.filter_by(
             grade=selected.grade,
             section=selected.section,
             is_active=True
-        ).order_by(Student.full_name).all()
-        if selected else []
-    )
+        ).order_by(Student.full_name)
+
+        students = student_query.all()
+
+        if selected.grade in ["11", "12"]:
+            if selected.stream:
+                students = [
+                    student for student in students
+                    if student_stream_matches(student, selected)
+                ]
+            elif user.role != "admin":
+                # Old Grade 11/12 assignments have no stream.
+                # They must be updated before a teacher can use them.
+                students = []
 
     if request.method == "POST" and selected:
         for student in students:
@@ -442,6 +638,14 @@ def marks():
 
             if not 0 <= score <= 100:
                 flash("Marks must be between 0 and 100.")
+                return redirect(url_for(
+                    "marks",
+                    assignment_id=selected.id,
+                    term=term
+                ))
+
+            if not selected.subject:
+                flash("This assignment has no subject selected.")
                 return redirect(url_for(
                     "marks",
                     assignment_id=selected.id,
@@ -477,7 +681,7 @@ def marks():
 
     assessment_existing = {}
 
-    if selected and students:
+    if selected and students and selected.subject:
         student_ids = [student.id for student in students]
 
         saved_marks = AssessmentMark.query.filter(
@@ -502,7 +706,7 @@ def marks():
 
     existing = {}
 
-    if selected:
+    if selected and selected.subject:
         marks_query = Mark.query.filter_by(
             subject=selected.subject,
             term=term
@@ -589,18 +793,23 @@ def save_assessment(student_id):
         }), 400
 
     if user.role == "teacher":
-        assigned = Assignment.query.filter_by(
+        teacher_assignments = Assignment.query.filter_by(
             teacher_id=user.id,
             grade=student.grade,
             section=student.section,
             subject=subject
-        ).first()
+        ).all()
+
+        assigned = any(
+            student_stream_matches(student, assignment)
+            for assignment in teacher_assignments
+        )
 
         if not assigned:
             return jsonify({
                 "success": False,
                 "message": (
-                    "You are not assigned to this subject and class."
+                    "You are not assigned to this subject, class and stream."
                 )
             }), 403
 
@@ -689,13 +898,8 @@ def student_management():
         is_active=False
     ).count()
 
-    male_count = sum(
-        1 for student in students if student.sex == "M"
-    )
-
-    female_count = sum(
-        1 for student in students if student.sex == "F"
-    )
+    male_count = sum(1 for student in students if student.sex == "M")
+    female_count = sum(1 for student in students if student.sex == "F")
 
     grades = ["9", "10", "11", "12"]
 
@@ -707,7 +911,6 @@ def student_management():
             1 for student in students
             if student.grade == grade and student.sex == "M"
         )
-
         female_by_grade[grade] = sum(
             1 for student in students
             if student.grade == grade and student.sex == "F"
@@ -744,7 +947,6 @@ def student_list():
 
     if search:
         search_term = f"%{search}%"
-
         query = query.filter(
             db.or_(
                 Student.full_name.ilike(search_term),
@@ -789,12 +991,10 @@ def register_student():
                 return render_template("register_student.html")
 
             extension = photo.filename.rsplit(".", 1)[1].lower()
-
             photo_filename = (
                 f"{generate_student_id().lower()}_"
                 f"{int(datetime.utcnow().timestamp())}.{extension}"
             )
-
             save_student_photo(photo, photo_filename)
 
         student = Student(
@@ -818,8 +1018,7 @@ def register_student():
         db.session.commit()
 
         flash(
-            f"Student registered successfully. "
-            f"Student ID: {student.student_id}"
+            f"Student registered successfully. Student ID: {student.student_id}"
         )
 
         return redirect(url_for(
@@ -869,9 +1068,11 @@ def student_profile(student_id):
         Mark.term
     ).all()
 
+    academic_year = (student.academic_year_ec or "").strip()
+
     assessment_marks = AssessmentMark.query.filter_by(
         student_id=student.id,
-        academic_year_ec=(student.academic_year_ec or "")
+        academic_year_ec=academic_year
     ).order_by(
         AssessmentMark.subject,
         AssessmentMark.semester
@@ -889,12 +1090,135 @@ def student_profile(student_id):
 
     subjects = sorted(set(subjects))
 
+    def calculate_semester_average(student_marks, semester):
+        semester_totals = []
+
+        for item in student_marks:
+            normalized = normalize_semester(item.semester)
+
+            if normalized == semester:
+                semester_totals.append(item.total)
+
+        if not semester_totals:
+            return None
+
+        return sum(semester_totals) / len(semester_totals)
+
+    def calculate_annual_average(student_marks):
+        semester1 = calculate_semester_average(
+            student_marks, "Semester 1"
+        )
+        semester2 = calculate_semester_average(
+            student_marks, "Semester 2"
+        )
+
+        if semester1 is None or semester2 is None:
+            return None
+
+        return (semester1 + semester2) / 2
+
+    semester1_average = calculate_semester_average(
+        assessment_marks, "Semester 1"
+    )
+    semester2_average = calculate_semester_average(
+        assessment_marks, "Semester 2"
+    )
+    annual_average = calculate_annual_average(assessment_marks)
+
+    grade_students = (
+        Student.query.filter_by(
+            grade=student.grade,
+            academic_year_ec=academic_year
+        ).all()
+        if academic_year else []
+    )
+
+    grade_student_ids = [item.id for item in grade_students]
+
+    grade_marks = (
+        AssessmentMark.query.filter(
+            AssessmentMark.student_id.in_(grade_student_ids),
+            AssessmentMark.academic_year_ec == academic_year
+        ).all()
+        if grade_student_ids else []
+    )
+
+    marks_by_student = {}
+
+    for item in grade_marks:
+        marks_by_student.setdefault(item.student_id, []).append(item)
+
+    def calculate_semester_rank(target_average, semester):
+        if target_average is None:
+            return None, 0
+
+        peer_averages = []
+
+        for grade_student in grade_students:
+            peer_marks = marks_by_student.get(grade_student.id, [])
+            peer_average = calculate_semester_average(
+                peer_marks, semester
+            )
+
+            if peer_average is not None:
+                peer_averages.append(peer_average)
+
+        if not peer_averages:
+            return None, 0
+
+        rank = 1 + sum(
+            1 for average in peer_averages
+            if average > target_average
+        )
+
+        return rank, len(peer_averages)
+
+    semester1_rank, semester1_rank_count = calculate_semester_rank(
+        semester1_average, "Semester 1"
+    )
+    semester2_rank, semester2_rank_count = calculate_semester_rank(
+        semester2_average, "Semester 2"
+    )
+
+    peer_annual_averages = []
+
+    for grade_student in grade_students:
+        peer_marks = marks_by_student.get(grade_student.id, [])
+        peer_average = calculate_annual_average(peer_marks)
+
+        if peer_average is not None:
+            peer_annual_averages.append(peer_average)
+
+    grade_student_count = len(peer_annual_averages)
+    grade_rank = None
+
+    if annual_average is not None and peer_annual_averages:
+        grade_rank = 1 + sum(
+            1 for average in peer_annual_averages
+            if average > annual_average
+        )
+
+    try:
+        next_grade = str(int(student.grade) + 1)
+    except (ValueError, TypeError):
+        next_grade = "—"
+
     return render_template(
         "student_profile.html",
         student=student,
         marks=marks,
         assessment_marks=assessment_marks,
-        subjects=subjects
+        subjects=subjects,
+        semester1_average=semester1_average,
+        semester2_average=semester2_average,
+        annual_average=annual_average,
+        semester1_rank=semester1_rank,
+        semester1_rank_count=semester1_rank_count,
+        semester2_rank=semester2_rank,
+        semester2_rank_count=semester2_rank_count,
+        grade_rank=grade_rank,
+        grade_student_count=grade_student_count,
+        next_grade=next_grade
     )
 
 
@@ -902,7 +1226,10 @@ def student_profile(student_id):
 # EDIT STUDENT INFORMATION
 # ==================================================
 
-@app.route("/students/<int:student_id>/edit", methods=["GET", "POST"])
+@app.route(
+    "/students/<int:student_id>/edit",
+    methods=["GET", "POST"]
+)
 @student_staff_only
 def edit_student(student_id):
     student = db.session.get(Student, student_id)
@@ -944,7 +1271,6 @@ def edit_student(student_id):
                 )
 
             extension = photo.filename.rsplit(".", 1)[1].lower()
-
             new_filename = (
                 f"{student.student_id.lower()}_"
                 f"{int(datetime.utcnow().timestamp())}.{extension}"
@@ -993,7 +1319,7 @@ def deactivate_student(student_id):
 
 
 # ==================================================
-# LEFT STUDENT LIST
+# LEFT / INACTIVE STUDENT LIST
 # ==================================================
 
 @app.route("/students/left")
@@ -1012,7 +1338,43 @@ def left_students():
 
 
 # ==================================================
-# STUDENT RESULT LIST
+# REACTIVATE STUDENT - PRESERVE EXISTING RECORD
+# ==================================================
+
+@app.route(
+    "/students/<int:student_id>/reactivate",
+    methods=["POST"]
+)
+@student_staff_only
+def reactivate_student(student_id):
+    student = db.session.get(Student, student_id)
+
+    if not student:
+        flash("Student not found.")
+        return redirect(url_for("left_students"))
+
+    if not student.is_active:
+        student.is_active = True
+        student.left_at = None
+
+        try:
+            db.session.commit()
+            flash(
+                f"{student.full_name} has been successfully reactivated."
+            )
+        except Exception:
+            db.session.rollback()
+            flash(
+                "Could not reactivate this student. Please try again."
+            )
+    else:
+        flash("This student is already active.")
+
+    return redirect(url_for("left_students"))
+
+
+# ==================================================
+# STUDENT RESULT LIST - ACTIVE STUDENTS ONLY
 # ==================================================
 
 @app.route("/students/results")
@@ -1020,11 +1382,10 @@ def left_students():
 def student_results():
     search = request.args.get("search", "").strip()
 
-    query = Student.query
+    query = Student.query.filter_by(is_active=True)
 
     if search:
         search_term = f"%{search}%"
-
         query = query.filter(
             db.or_(
                 Student.full_name.ilike(search_term),
@@ -1052,52 +1413,283 @@ def student_results():
 @app.route("/admin")
 @admin_only
 def admin():
+    teachers = User.query.filter_by(
+        role="teacher",
+        is_active=True
+    ).order_by(
+        User.teacher_name,
+        User.username
+    ).all()
+
+    assignments = Assignment.query.order_by(
+        Assignment.grade,
+        Assignment.section,
+        Assignment.stream,
+        Assignment.subject
+    ).all()
+
+    assignments_by_teacher = {}
+
+    for assignment in assignments:
+        assignments_by_teacher.setdefault(
+            assignment.teacher_id, []
+        ).append(assignment)
+
     return render_template(
         "admin.html",
-        teachers=User.query.filter_by(
-            role="teacher",
-            is_active=True
-        ).all(),
-        students=Student.query.filter_by(
-            is_active=True
-        ).order_by(
-            Student.grade,
-            Student.section,
-            Student.full_name
-        ).all(),
-        assignments=Assignment.query.all(),
-        student_staff=User.query.filter_by(
-            role="student_management",
-            is_active=True
-        ).all()
+        teachers=teachers,
+        assignments=assignments,
+        assignments_by_teacher=assignments_by_teacher,
+        subjects=get_school_subject_names()
     )
 
 
 # ==================================================
 # CREATE TEACHER ACCOUNT
+# USERNAME IS THE TEACHER'S NAME
 # ==================================================
 
-@app.route("/admin/create-teacher", methods=["POST"])
+@app.route(
+    "/admin/create-teacher",
+    methods=["GET", "POST"]
+)
 @admin_only
 def create_teacher():
-    username = request.form.get("username", "").strip()
-    password = request.form.get("password", "")
+    if request.method == "GET":
+        return render_template(
+            "create_teacher.html",
+            subjects_by_grade=SUBJECTS_BY_GRADE
+        )
 
-    if not username:
-        flash("Enter a teacher username.")
-    elif len(password) < 8:
+    teacher_name = request.form.get(
+        "teacher_name", ""
+    ).strip()
+
+    # Username is the teacher's name.
+    username = teacher_name
+
+    password = request.form.get("password", "")
+    grade = request.form.get("grade", "").strip()
+    section = request.form.get("section", "").strip().upper()
+
+    stream_input = request.form.get("stream", "").strip()
+    stream = normalize_stream(stream_input) if stream_input else None
+
+    subject_name = request.form.get("subject", "").strip()
+
+    make_class_teacher = (
+        request.form.get("is_class_teacher") == "yes"
+    )
+
+    if not teacher_name or not password:
+        flash("Teacher name and password are required.")
+        return redirect(url_for("create_teacher"))
+
+    if len(password) < 8:
         flash("Password must be at least 8 characters.")
-    elif User.query.filter_by(username=username).first():
-        flash("Username already exists.")
+        return redirect(url_for("create_teacher"))
+
+    if User.query.filter_by(username=username).first():
+        flash("A teacher or user with this name already exists.")
+        return redirect(url_for("create_teacher"))
+
+    if grade not in VALID_GRADES:
+        flash("Select a valid grade.")
+        return redirect(url_for("create_teacher"))
+
+    if section not in VALID_SECTIONS:
+        flash("Select a valid class.")
+        return redirect(url_for("create_teacher"))
+
+    if grade in ["11", "12"]:
+        if stream not in VALID_STREAMS:
+            flash("Select Natural Sciences or Social Sciences.")
+            return redirect(url_for("create_teacher"))
     else:
-        db.session.add(User(
+        stream = None
+
+    if not valid_assignment_subject(grade, stream, subject_name):
+        flash("The selected subject does not belong to this grade and stream.")
+        return redirect(url_for("create_teacher"))
+
+    if make_class_teacher:
+        existing_class_teacher = User.query.filter_by(
+            role="teacher",
+            is_active=True,
+            class_teacher_grade=grade,
+            class_teacher_section=section
+        ).first()
+
+        if existing_class_teacher:
+            existing_name = (
+                existing_class_teacher.teacher_name
+                or existing_class_teacher.username
+            )
+            flash(
+                f"This class already has a Class Teacher: {existing_name}."
+            )
+            return redirect(url_for("create_teacher"))
+
+    try:
+        teacher = User(
             username=username,
             password_hash=generate_password_hash(password),
             role="teacher",
-            is_active=True
+            is_active=True,
+            teacher_name=teacher_name
+        )
+
+        if make_class_teacher:
+            teacher.class_teacher_grade = grade
+            teacher.class_teacher_section = section
+
+        db.session.add(teacher)
+        db.session.flush()
+
+        db.session.add(Assignment(
+            teacher_id=teacher.id,
+            grade=grade,
+            section=section,
+            stream=stream,
+            subject=subject_name or None
         ))
+
+        save_subject_if_new(subject_name)
+
         db.session.commit()
-        flash("Teacher account created.")
+        flash("Teacher created successfully.")
+
+    except Exception:
+        db.session.rollback()
+        flash("Could not create the teacher. Please try again.")
+        return redirect(url_for("create_teacher"))
+
+    return redirect(url_for("admin"))
+
+
+# ==================================================
+# REPLACE TEACHER
+# ==================================================
+
+@app.route(
+    "/admin/replace-teacher/<int:teacher_id>",
+    methods=["GET", "POST"]
+)
+@admin_only
+def replace_teacher(teacher_id):
+    old_teacher = db.session.get(User, teacher_id)
+
+    if (
+        not old_teacher
+        or old_teacher.role != "teacher"
+        or not old_teacher.is_active
+    ):
+        flash("Active teacher not found.")
+        return redirect(url_for("admin"))
+
+    replacement_teachers = User.query.filter(
+        User.role == "teacher",
+        User.is_active.is_(True),
+        User.id != old_teacher.id
+    ).order_by(
+        User.teacher_name,
+        User.username
+    ).all()
+
+    if request.method == "GET":
+        return render_template(
+            "replace_teacher.html",
+            old_teacher=old_teacher,
+            replacement_teachers=replacement_teachers
+        )
+
+    new_teacher_id = request.form.get(
+        "new_teacher_id", type=int
+    )
+
+    new_teacher = db.session.get(User, new_teacher_id)
+
+    if (
+        not new_teacher
+        or new_teacher.role != "teacher"
+        or not new_teacher.is_active
+        or new_teacher.id == old_teacher.id
+    ):
+        flash("Select a valid replacement teacher.")
+        return redirect(url_for(
+            "replace_teacher",
+            teacher_id=old_teacher.id
+        ))
+
+    try:
+        if old_teacher.class_teacher_grade:
+            old_grade = old_teacher.class_teacher_grade
+            old_section = old_teacher.class_teacher_section
+
+            existing_class_teacher = User.query.filter(
+                User.id != old_teacher.id,
+                User.id != new_teacher.id,
+                User.role == "teacher",
+                User.is_active.is_(True),
+                User.class_teacher_grade == old_grade,
+                User.class_teacher_section == old_section
+            ).first()
+
+            if existing_class_teacher:
+                flash(
+                    "Another active teacher is already Class Teacher "
+                    "for this class."
+                )
+                return redirect(url_for(
+                    "replace_teacher",
+                    teacher_id=old_teacher.id
+                ))
+
+            if (
+                new_teacher.class_teacher_grade
+                and (
+                    new_teacher.class_teacher_grade != old_grade
+                    or new_teacher.class_teacher_section != old_section
+                )
+            ):
+                flash(
+                    "The replacement teacher is already Class Teacher "
+                    "for another class."
+                )
+                return redirect(url_for(
+                    "replace_teacher",
+                    teacher_id=old_teacher.id
+                ))
+
+            new_teacher.class_teacher_grade = old_grade
+            new_teacher.class_teacher_section = old_section
+
+            old_teacher.class_teacher_grade = None
+            old_teacher.class_teacher_section = None
+
+        # Transfer assignments, including their stream values.
+        assignments = Assignment.query.filter_by(
+            teacher_id=old_teacher.id
+        ).all()
+
+        for assignment in assignments:
+            assignment.teacher_id = new_teacher.id
+
+        # Deactivate old account; do not delete it.
+        old_teacher.is_active = False
+
+        # Mark.teacher_id and AssessmentMark.teacher_id are
+        # deliberately preserved as historical records.
+        db.session.commit()
+
+        flash(
+            "Teacher replaced successfully. Assignments transferred "
+            "and old account deactivated."
+        )
+
+    except Exception:
+        db.session.rollback()
+        flash("Teacher replacement failed. No changes were saved.")
 
     return redirect(url_for("admin"))
 
@@ -1106,7 +1698,10 @@ def create_teacher():
 # CREATE STUDENT MANAGEMENT STAFF ACCOUNT
 # ==================================================
 
-@app.route("/admin/create-student-staff", methods=["POST"])
+@app.route(
+    "/admin/create-student-staff",
+    methods=["POST"]
+)
 @admin_only
 def create_student_staff():
     username = request.form.get("username", "").strip()
@@ -1133,6 +1728,7 @@ def create_student_staff():
 
 # ==================================================
 # ASSIGN TEACHER TO CLASS AND SUBJECT
+# EXISTING ROUTE PRESERVED
 # ==================================================
 
 @app.route("/admin/assign", methods=["POST"])
@@ -1153,34 +1749,48 @@ def assign_teacher():
 
     subject_name = request.form.get("subject", "").strip()
     grade = request.form.get("grade", "").strip()
-    section = request.form.get("section", "").strip()
+    section = request.form.get("section", "").strip().upper()
+    stream_input = request.form.get("stream", "").strip()
 
-    if not subject_name or not grade or not section:
-        flash("Complete all assignment fields.")
+    stream = normalize_stream(stream_input) if stream_input else None
+
+    if not grade or not section:
+        flash("Complete the grade and class fields.")
+        return redirect(url_for("admin"))
+
+    if grade not in VALID_GRADES or section not in VALID_SECTIONS:
+        flash("Select a valid grade and class.")
+        return redirect(url_for("admin"))
+
+    if grade in ["11", "12"] and stream not in VALID_STREAMS:
+        flash("Select a stream for Grade 11 or Grade 12.")
+        return redirect(url_for("admin"))
+
+    if grade in ["9", "10"]:
+        stream = None
+
+    if not valid_assignment_subject(grade, stream, subject_name):
+        flash("The subject does not belong to this grade and stream.")
         return redirect(url_for("admin"))
 
     db.session.add(Assignment(
         teacher_id=teacher.id,
         grade=grade,
         section=section,
-        subject=subject_name
+        stream=stream,
+        subject=subject_name or None
     ))
 
-    subject = Subject.query.filter_by(
-        name=subject_name
-    ).first()
-
-    if not subject:
-        db.session.add(Subject(name=subject_name))
-
+    save_subject_if_new(subject_name)
     db.session.commit()
-    flash("Assignment saved.")
 
+    flash("Assignment saved.")
     return redirect(url_for("admin"))
 
 
 # ==================================================
 # LEGACY ADMIN ADD STUDENT ROUTE
+# ROUTE PRESERVED, NOT SHOWN IN ADMIN PANEL
 # ==================================================
 
 @app.route("/admin/add-student", methods=["POST"])

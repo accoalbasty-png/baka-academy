@@ -1,298 +1,343 @@
+
 {% extends "base.html" %}
 
 {% block title %}Left Student List - Baka Academy{% endblock %}
 
 {% block content %}
 
-<style>
-    .student-list-page {
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 24px 28px;
-        box-sizing: border-box;
-    }
+<div class="student-layout">
 
-    .student-list-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-    }
+    {% include "_student_sidebar.html" %}
 
-    .student-list-header h2 {
-        color: #174b36;
-        margin: 0;
-        font-size: 26px;
-    }
+    <section class="student-content">
 
-    .student-list-header p {
-        color: #64756a;
-        margin: 5px 0 0;
-        font-size: 13px;
-    }
-
-    .register-button {
-        display: inline-block;
-        background: #174b36;
-        color: white;
-        padding: 11px 17px;
-        border-radius: 7px;
-        text-decoration: none;
-        font-weight: bold;
-        font-size: 13px;
-    }
-
-    .register-button:hover {
-        background: #236b4c;
-        color: white;
-    }
-
-    .student-list-card {
-        width: 100%;
-        background: white;
-        border-radius: 11px;
-        padding: 22px;
-        box-shadow: 0 2px 10px #17203312;
-        box-sizing: border-box;
-    }
-
-    .list-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-        margin-bottom: 18px;
-    }
-
-    .list-toolbar h3 {
-        color: #174b36;
-        margin: 0;
-        font-size: 18px;
-    }
-
-    .student-search-input {
-        width: 320px;
-        max-width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #cbd8ce;
-        border-radius: 6px;
-        margin: 0;
-        box-sizing: border-box;
-    }
-
-    .student-table-container {
-        width: 100%;
-        overflow-x: auto;
-        border: 1px solid #e1e9e3;
-        border-radius: 7px;
-    }
-
-    .student-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 950px;
-        font-size: 13px;
-    }
-
-    .student-table th {
-        background: #174b36;
-        color: white;
-        padding: 14px 12px;
-        text-align: left;
-        white-space: nowrap;
-        font-weight: 600;
-    }
-
-    .student-table td {
-        padding: 13px 12px;
-        border-bottom: 1px solid #e1e9e3;
-        color: #34463a;
-        vertical-align: middle;
-    }
-
-    .student-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .student-table tbody tr:hover {
-        background: #f3f7f4;
-    }
-
-    .action-link {
-        display: inline-block;
-        padding: 7px 10px;
-        background: #e8f2ec;
-        color: #174b36;
-        text-decoration: none;
-        border-radius: 5px;
-        font-size: 11px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-
-    .action-link:hover {
-        background: #d5e7da;
-    }
-
-    .student-count {
-        color: #64756a;
-        font-size: 12px;
-        margin-top: 15px;
-    }
-
-    .empty-row {
-        text-align: center;
-        padding: 35px !important;
-        color: #64756a !important;
-    }
-
-    @media (max-width: 700px) {
-        .student-list-page {
-            padding: 14px 9px;
-        }
-
-        .student-list-card {
-            padding: 13px;
-        }
-
-        .list-toolbar {
-            align-items: flex-start;
-        }
-
-        .student-search-input {
-            width: 100%;
-        }
-    }
-</style>
-
-<div class="student-list-page">
-
-    <div class="student-list-header">
-        <div>
-            <h2>Left Student List</h2>
-            <p>View students who have left Baka Academy.</p>
-        </div>
-
-        <a href="{{ url_for('student_management') }}"
-           class="register-button">
-            ← Student Management
-        </a>
-    </div>
-
-    <div class="student-list-card">
-
-        <div class="list-toolbar">
-            <h3>Departed Students</h3>
-
-            <input
-                type="text"
-                id="leftStudentSearch"
-                class="student-search-input"
-                placeholder="Search name, student ID or phone...">
-        </div>
-
-        <div class="student-table-container">
-
-            <table class="student-table">
-
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Student ID</th>
-                        <th>Full Name</th>
-                        <th>Grade</th>
-                        <th>Class</th>
-                        <th>Phone</th>
-                        <th>Date Left</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody id="leftStudentTable">
-
-                    {% for student in students %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td>{{ student.student_id }}</td>
-                        <td>{{ student.full_name }}</td>
-                        <td>{{ student.grade }}</td>
-                        <td>{{ student.section }}</td>
-                        <td>{{ student.family_phone or "-" }}</td>
-
-                        <td>
-                            {% if student.left_at %}
-                                {{ student.left_at.strftime("%Y-%m-%d") }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <a class="action-link"
-                               href="{{ url_for('student_profile', student_id=student.id) }}">
-                                View Profile
-                            </a>
-                        </td>
-                    </tr>
-
-                    {% else %}
-                    <tr>
-                        <td colspan="8" class="empty-row">
-                            No students have left the school.
-                        </td>
-                    </tr>
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="student-count">
-            Showing <span id="visibleStudentCount">{{ students|length }}</span>
-            of {{ students|length }} departed student(s).
-        </div>
-
-    </div>
-
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    const searchInput = document.getElementById("leftStudentSearch");
-    const tableBody = document.getElementById("leftStudentTable");
-    const countDisplay = document.getElementById("visibleStudentCount");
-
-    searchInput.addEventListener("input", function () {
-
-        const search = this.value.toLowerCase().trim();
-        const rows = tableBody.querySelectorAll("tr");
-        let visibleCount = 0;
-
-        rows.forEach(function (row) {
-
-            const text = row.textContent.toLowerCase();
-            const matches = text.includes(search);
-
-            row.style.display = matches ? "" : "none";
-
-            if (matches && row.cells.length > 1) {
-                visibleCount++;
+        <style>
+            .student-list-page {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 24px 28px;
+                box-sizing: border-box;
             }
 
+            .student-list-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+                flex-wrap: wrap;
+                margin-bottom: 20px;
+            }
+
+            .student-list-header h2 {
+                color: #174b36;
+                margin: 0;
+                font-size: 26px;
+            }
+
+            .student-list-header p {
+                color: #64756a;
+                margin: 5px 0 0;
+                font-size: 13px;
+            }
+
+            .register-button {
+                display: inline-block;
+                background: #174b36;
+                color: white;
+                padding: 11px 17px;
+                border-radius: 7px;
+                text-decoration: none;
+                font-weight: bold;
+                font-size: 13px;
+            }
+
+            .register-button:hover {
+                background: #236b4c;
+                color: white;
+            }
+
+            .student-list-card {
+                width: 100%;
+                background: white;
+                border-radius: 11px;
+                padding: 22px;
+                box-shadow: 0 2px 10px #17203312;
+                box-sizing: border-box;
+            }
+
+            .list-toolbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+                flex-wrap: wrap;
+                margin-bottom: 18px;
+            }
+
+            .list-toolbar h3 {
+                color: #174b36;
+                margin: 0;
+                font-size: 18px;
+            }
+
+            .student-search-input {
+                width: 320px;
+                max-width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #cbd8ce;
+                border-radius: 6px;
+                margin: 0;
+                box-sizing: border-box;
+            }
+
+            .student-table-container {
+                width: 100%;
+                overflow-x: auto;
+                border: 1px solid #e1e9e3;
+                border-radius: 7px;
+            }
+
+            .student-table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 1050px;
+                font-size: 13px;
+            }
+
+            .student-table th {
+                background: #174b36;
+                color: white;
+                padding: 14px 12px;
+                text-align: left;
+                white-space: nowrap;
+                font-weight: 600;
+            }
+
+            .student-table td {
+                padding: 13px 12px;
+                border-bottom: 1px solid #e1e9e3;
+                color: #34463a;
+                vertical-align: middle;
+            }
+
+            .student-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .student-table tbody tr:hover {
+                background: #f3f7f4;
+            }
+
+            .action-link {
+                display: inline-block;
+                padding: 7px 10px;
+                background: #e8f2ec;
+                color: #174b36;
+                text-decoration: none;
+                border-radius: 5px;
+                font-size: 11px;
+                font-weight: bold;
+                white-space: nowrap;
+                border: none;
+                cursor: pointer;
+            }
+
+            .action-link:hover {
+                background: #d5e7da;
+            }
+
+            .reactivate-button {
+                display: inline-block;
+                padding: 7px 10px;
+                background: #174b36;
+                color: white;
+                border-radius: 5px;
+                font-size: 11px;
+                font-weight: bold;
+                white-space: nowrap;
+                border: none;
+                cursor: pointer;
+            }
+
+            .reactivate-button:hover {
+                background: #236b4c;
+            }
+
+            .student-count {
+                color: #64756a;
+                font-size: 12px;
+                margin-top: 15px;
+            }
+
+            .empty-row {
+                text-align: center;
+                padding: 35px !important;
+                color: #64756a !important;
+            }
+
+            @media (max-width: 700px) {
+                .student-list-page {
+                    padding: 14px 9px;
+                }
+
+                .student-list-card {
+                    padding: 13px;
+                }
+
+                .list-toolbar {
+                    align-items: flex-start;
+                }
+
+                .student-search-input {
+                    width: 100%;
+                }
+            }
+        </style>
+
+        <div class="student-list-page">
+
+            <div class="student-list-header">
+                <div>
+                    <h2>Left Student List</h2>
+                    <p>View and reactivate students who have left Baka Academy.</p>
+                </div>
+
+                <a href="{{ url_for('student_list') }}"
+                   class="register-button">
+                    ← Active Student List
+                </a>
+            </div>
+
+            <div class="student-list-card">
+
+                <div class="list-toolbar">
+                    <h3>Departed Students</h3>
+
+                    <input
+                        type="text"
+                        id="leftStudentSearch"
+                        class="student-search-input"
+                        placeholder="Search name, student ID or phone...">
+                </div>
+
+                <div class="student-table-container">
+
+                    <table class="student-table">
+
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Student ID</th>
+                                <th>Full Name</th>
+                                <th>Grade</th>
+                                <th>Class</th>
+                                <th>Phone</th>
+                                <th>Date Left</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="leftStudentTable">
+
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ student.student_id }}</td>
+                                <td>{{ student.full_name }}</td>
+                                <td>{{ student.grade }}</td>
+                                <td>{{ student.section }}</td>
+                                <td>{{ student.family_phone or "-" }}</td>
+
+                                <td>
+                                    {% if student.left_at %}
+                                        {{ student.left_at.strftime("%Y-%m-%d") }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <a class="action-link"
+                                       href="{{ url_for('student_profile', student_id=student.id, source='left_students') }}">
+                                        View Profile
+                                    </a>
+
+                                    <form method="POST"
+                                          action="{{ url_for('reactivate_student', student_id=student.id) }}"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('Are you sure you want to reactivate {{ student.full_name }}?');">
+
+                                        <button type="submit" class="reactivate-button">
+                                            Reactivate
+                                        </button>
+
+                                    </form>
+                                </td>
+                            </tr>
+
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="empty-row">
+                                    No students have left the school.
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="student-count">
+                    Showing <span id="visibleStudentCount">{{ students|length }}</span>
+                    of {{ students|length }} departed student(s).
+                </div>
+
+            </div>
+
+        </div>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const searchInput = document.getElementById("leftStudentSearch");
+            const tableBody = document.getElementById("leftStudentTable");
+            const countDisplay = document.getElementById("visibleStudentCount");
+
+            if (!searchInput || !tableBody || !countDisplay) {
+                return;
+            }
+
+            searchInput.addEventListener("input", function () {
+
+                const search = this.value.toLowerCase().trim();
+                const rows = tableBody.querySelectorAll("tr");
+                let visibleCount = 0;
+
+                rows.forEach(function (row) {
+
+                    const text = row.textContent.toLowerCase();
+                    const matches = text.includes(search);
+
+                    row.style.display = matches ? "" : "none";
+
+                    if (matches && row.cells.length > 1) {
+                        visibleCount++;
+                    }
+
+                });
+
+                countDisplay.textContent = visibleCount;
+
+            });
+
         });
+        </script>
 
-        countDisplay.textContent = visibleCount;
+    </section>
 
-    });
-
-});
-</script>
+</div>
 
 {% endblock %}

@@ -1,0 +1,152 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="panel">
+
+    <h2>Create Teacher Account</h2>
+
+    <p>Enter the teacher's information below.</p>
+
+    <form method="POST" action="{{ url_for('create_teacher') }}">
+
+        <label>Teacher Name *</label>
+        <input
+            type="text"
+            name="teacher_name"
+            placeholder="Enter teacher's full name"
+            required
+        >
+
+        <label>Password *</label>
+        <input
+            type="password"
+            name="password"
+            placeholder="Minimum 8 characters"
+            minlength="8"
+            required
+        >
+
+        <label>Grade *</label>
+        <select name="grade" id="grade" required>
+            <option value="">Select Grade</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+            <option value="12">Grade 12</option>
+        </select>
+
+        <div id="stream-container" style="display:none;">
+
+            <label>Stream *</label>
+            <select name="stream" id="stream">
+                <option value="">Select Stream</option>
+                <option value="Natural Sciences">Natural Sciences</option>
+                <option value="Social Sciences">Social Sciences</option>
+            </select>
+
+        </div>
+
+        <label>Class *</label>
+        <select name="section" required>
+            <option value="">Select Class</option>
+            <option value="A">Class A</option>
+            <option value="B">Class B</option>
+            <option value="C">Class C</option>
+            <option value="D">Class D</option>
+        </select>
+
+        <label>Subject (Optional)</label>
+        <select name="subject" id="subject">
+            <option value="">Select Subject (Optional)</option>
+        </select>
+
+        <div style="margin:20px 0;">
+            <label style="display:flex; align-items:center; gap:10px;">
+                <input
+                    type="checkbox"
+                    name="is_class_teacher"
+                    value="yes"
+                    style="width:auto;"
+                >
+                Make this teacher the Class Teacher
+            </label>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+            <button type="submit" class="btn">
+                Create Teacher
+            </button>
+
+            <a
+                href="{{ url_for('admin') }}"
+                class="btn"
+                style="text-decoration:none;"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    const subjectsByGrade = {{ subjects_by_grade | tojson }};
+
+    const gradeSelect = document.getElementById("grade");
+    const streamSelect = document.getElementById("stream");
+    const streamContainer = document.getElementById("stream-container");
+    const subjectSelect = document.getElementById("subject");
+
+    function updateSubjects() {
+        const grade = gradeSelect.value;
+        const stream = streamSelect.value;
+
+        subjectSelect.innerHTML =
+            '<option value="">Select Subject (Optional)</option>';
+
+        let subjects = [];
+
+        if (grade === "9" || grade === "10") {
+            subjects = subjectsByGrade[grade] || [];
+        }
+
+        if ((grade === "11" || grade === "12") && stream) {
+            subjects =
+                (subjectsByGrade[grade] || {})[stream] || [];
+        }
+
+        subjects.forEach(function(subject) {
+            const option = document.createElement("option");
+            option.value = subject;
+            option.textContent = subject;
+            subjectSelect.appendChild(option);
+        });
+    }
+
+    function updateGradeFields() {
+        const grade = gradeSelect.value;
+
+        if (grade === "11" || grade === "12") {
+            streamContainer.style.display = "block";
+            streamSelect.required = true;
+        } else {
+            streamContainer.style.display = "none";
+            streamSelect.required = false;
+            streamSelect.value = "";
+        }
+
+        updateSubjects();
+    }
+
+    gradeSelect.addEventListener("change", updateGradeFields);
+    streamSelect.addEventListener("change", updateSubjects);
+
+    updateGradeFields();
+</script>
+
+{% endblock %}

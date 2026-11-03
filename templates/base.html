@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -68,7 +69,8 @@
             align-items: center;
             justify-content: flex-end;
             gap: 6px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            margin-left: auto;
         }
 
         .main-navigation a {
@@ -92,6 +94,66 @@
             background: #842020;
         }
 
+        /* Sidebar toggle button inside the green sidebar */
+        .content-sidebar-toggle {
+            background: #ffffff20;
+            color: white;
+            border: 1px solid #ffffff55;
+            border-radius: 6px;
+            width: 36px;
+            height: 34px;
+            padding: 0;
+            font-size: 21px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 36px;
+        }
+
+        .content-sidebar-toggle:hover {
+            background: #ffffff35;
+        }
+
+        /* Sidebar transition */
+        .student-layout .student-sidebar,
+        .student-dashboard .student-sidebar {
+            transition: width 0.25s ease,
+                        min-width 0.25s ease,
+                        flex-basis 0.25s ease;
+        }
+
+        /* Collapsed sidebar */
+        .student-layout.sidebar-collapsed .student-sidebar,
+        .student-dashboard.sidebar-collapsed .student-sidebar {
+            width: 65px !important;
+            min-width: 65px !important;
+            flex: 0 0 65px !important;
+            padding: 18px 7px !important;
+            overflow: hidden;
+        }
+
+        .student-layout.sidebar-collapsed .sidebar-heading,
+        .student-dashboard.sidebar-collapsed .sidebar-heading,
+        .student-layout.sidebar-collapsed .sidebar-link span:not(.sidebar-icon),
+        .student-dashboard.sidebar-collapsed .sidebar-link span:not(.sidebar-icon) {
+            display: none !important;
+        }
+
+        .student-layout.sidebar-collapsed .sidebar-link,
+        .student-dashboard.sidebar-collapsed .sidebar-link {
+            justify-content: center;
+            padding: 10px 5px;
+        }
+
+        .student-layout.sidebar-collapsed .sidebar-top {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        /* Back navigation */
         .back-navigation {
             width: 100%;
             min-height: 38px;
@@ -144,7 +206,7 @@
             }
 
             .main-navigation {
-                justify-content: flex-start;
+                justify-content: flex-end;
             }
         }
 
@@ -167,7 +229,8 @@
 
             .main-navigation {
                 width: 100%;
-                justify-content: flex-start;
+                justify-content: flex-end;
+                flex-wrap: wrap;
                 gap: 4px;
             }
 
@@ -233,12 +296,10 @@
 </header>
 
 <div class="back-navigation" id="backNavigation" hidden>
-
     <a href="#" class="back-button" id="backButton">
         <span aria-hidden="true">←</span>
         Back
     </a>
-
 </div>
 
 <main>
@@ -272,99 +333,123 @@
 
     if (currentPath === dashboardPath || currentPath === "/login") {
         backNavigation.hidden = true;
-        return;
-    }
-
-    if (
-        currentPath === "/admin" ||
-        currentPath === "/teacher/marks" ||
-        currentPath === studentsPath
-    ) {
-        backPath = dashboardPath;
-
-    } else if (
-        currentPath === "/students/register" ||
-        currentPath === "/students/list" ||
-        currentPath === "/students/results" ||
-        currentPath === "/students/left"
-    ) {
-        backPath = studentsPath;
-
     } else {
 
-        const editMatch = currentPath.match(/^\/students\/(\d+)\/edit$/);
+        if (
+            currentPath === "/admin" ||
+            currentPath === "/teacher/marks" ||
+            currentPath === studentsPath
+        ) {
+            backPath = dashboardPath;
 
-        if (editMatch) {
-            backPath = "/students/" + editMatch[1];
-        }
+        } else if (
+            currentPath === "/students/register" ||
+            currentPath === "/students/list" ||
+            currentPath === "/students/results" ||
+            currentPath === "/students/left"
+        ) {
+            backPath = studentsPath;
 
-        const profileMatch = currentPath.match(/^\/students\/(\d+)$/);
+        } else {
 
-        if (profileMatch) {
+            const editMatch = currentPath.match(/^\/students\/(\d+)\/edit$/);
 
-            const studentId = profileMatch[1];
-            const returnKey = "bakaStudentReturn_" + studentId;
+            if (editMatch) {
+                backPath = "/students/" + editMatch[1];
+            }
 
-            let savedReturn = sessionStorage.getItem(returnKey);
-            let referrerPath = "";
+            const profileMatch = currentPath.match(/^\/students\/(\d+)$/);
 
-            try {
+            if (profileMatch) {
 
-                if (document.referrer) {
+                const studentId = profileMatch[1];
+                const returnKey = "bakaStudentReturn_" + studentId;
 
-                    const referrer = new URL(document.referrer);
+                let savedReturn = sessionStorage.getItem(returnKey);
+                let referrerPath = "";
 
-                    if (referrer.origin === window.location.origin) {
-                        referrerPath = referrer.pathname;
+                try {
+
+                    if (document.referrer) {
+
+                        const referrer = new URL(document.referrer);
+
+                        if (referrer.origin === window.location.origin) {
+                            referrerPath = referrer.pathname;
+                        }
+
                     }
 
+                } catch (error) {
+                    referrerPath = "";
                 }
 
-            } catch (error) {
-                referrerPath = "";
-            }
+                const allowedReturnPaths = [
+                    "/students",
+                    "/students/list",
+                    "/students/results",
+                    "/students/left"
+                ];
 
-            const allowedReturnPaths = [
-                "/students",
-                "/students/list",
-                "/students/results",
-                "/students/left"
-            ];
+                if (allowedReturnPaths.includes(referrerPath)) {
+                    savedReturn = referrerPath;
+                    sessionStorage.setItem(returnKey, savedReturn);
+                }
 
-            if (allowedReturnPaths.includes(referrerPath)) {
+                if (referrerPath === "/students/register") {
+                    savedReturn = studentsPath;
+                    sessionStorage.setItem(returnKey, savedReturn);
+                }
 
-                savedReturn = referrerPath;
-                sessionStorage.setItem(returnKey, savedReturn);
-
-            }
-
-            if (referrerPath === "/students/register") {
-
-                savedReturn = studentsPath;
-                sessionStorage.setItem(returnKey, savedReturn);
+                backPath = allowedReturnPaths.includes(savedReturn)
+                    ? savedReturn
+                    : studentsPath;
 
             }
-
-            backPath = allowedReturnPaths.includes(savedReturn)
-                ? savedReturn
-                : studentsPath;
 
         }
 
-    }
-
-    if (backPath) {
-
-        backButton.href = backPath;
-        backNavigation.hidden = false;
-
-    } else {
-
-        backNavigation.hidden = true;
-
+        if (backPath) {
+            backButton.href = backPath;
+            backNavigation.hidden = false;
+        } else {
+            backNavigation.hidden = true;
+        }
     }
 
 })();
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const toggleButton = document.getElementById("topSidebarToggle");
+
+    const layout =
+        document.querySelector(".student-layout") ||
+        document.querySelector(".student-dashboard");
+
+    if (!toggleButton || !layout) {
+        return;
+    }
+
+    const currentPage = {{ request.endpoint|tojson }};
+
+    if (currentPage === "student_management") {
+        layout.classList.remove("sidebar-collapsed");
+    } else if (
+        currentPage === "student_list" ||
+        currentPage === "student_results" ||
+        currentPage === "left_students"
+    ) {
+        layout.classList.add("sidebar-collapsed");
+    }
+
+    toggleButton.addEventListener("click", function () {
+        layout.classList.toggle("sidebar-collapsed");
+    });
+
+});
 </script>
 
 </body>

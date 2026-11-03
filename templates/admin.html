@@ -1,1 +1,148 @@
-{% extends "base.html" %}{% block content %}<h2>Administrator panel</h2><div class="cards"><section class="panel"><h3>Create teacher</h3><form method="post" action="{{ url_for('create_teacher') }}"><label>Username<input name="username" required></label><label>Temporary password<input type="password" name="password" minlength="8" required></label><button>Create teacher</button></form><h4>Teachers</h4><ul>{% for t in teachers %}<li>{{ t.username }}</li>{% else %}<li>None yet</li>{% endfor %}</ul></section><section class="panel"><h3>Assign teacher</h3><form method="post" action="{{ url_for('assign_teacher') }}"><label>Teacher<select name="teacher_id" required>{% for t in teachers %}<option value="{{ t.id }}">{{ t.username }}</option>{% endfor %}</select></label><label>Grade<select name="grade">{% for g in ['9','10','11','12'] %}<option>{{ g }}</option>{% endfor %}</select></label><label>Class<input name="section" value="A" required></label><label>Subject<input name="subject" value="English" required></label><button>Save assignment</button></form><h4>Assignments</h4><ul>{% for a in assignments %}<li>Grade {{ a.grade }}{{ a.section }} · {{ a.subject }} · Teacher ID {{ a.teacher_id }}</li>{% else %}<li>None yet</li>{% endfor %}</ul></section><section class="panel"><h3>Add student</h3><form method="post" action="{{ url_for('add_student') }}"><label>Full name<input name="full_name" required></label><label>Grade<select name="grade">{% for g in ['9','10','11','12'] %}<option>{{ g }}</option>{% endfor %}</select></label><label>Class<input name="section" value="A" required></label><button>Add student</button></form><h4>Students</h4><ul>{% for s in students %}<li>{{ s.student_id }} · {{ s.full_name }} · {{ s.grade }}{{ s.section }}</li>{% else %}<li>None yet</li>{% endfor %}</ul></section></div>{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <h2>Administrator Panel</h2>
+
+    <a href="{{ url_for('create_teacher') }}"
+       class="btn"
+       style="text-decoration:none;">
+        + Create Teacher
+    </a>
+</div>
+
+<section class="panel">
+
+    <h3>Assign Teacher</h3>
+
+    <p>View and manage active teachers and their assignments.</p>
+
+    <div style="overflow-x:auto;">
+
+        <table style="width:100%; border-collapse:collapse;">
+
+            <thead>
+                <tr>
+                    <th style="padding:12px; text-align:left;">No.</th>
+                    <th style="padding:12px; text-align:left;">Teacher Name</th>
+                    <th style="padding:12px; text-align:left;">Username</th>
+                    <th style="padding:12px; text-align:left;">Password</th>
+                    <th style="padding:12px; text-align:left;">Grade / Class</th>
+                    <th style="padding:12px; text-align:left;">Stream</th>
+                    <th style="padding:12px; text-align:left;">Subject</th>
+                    <th style="padding:12px; text-align:left;">Role</th>
+                    <th style="padding:12px; text-align:left;">Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for t in teachers %}
+
+                    {% set teacher_assignments = assignments_by_teacher.get(t.id, []) %}
+
+                    {% if teacher_assignments %}
+
+                        {% for a in teacher_assignments %}
+                            <tr>
+                                {% if loop.first %}
+                                    <td rowspan="{{ teacher_assignments|length }}" style="padding:12px; vertical-align:top;">
+                                        {{ loop.index }}
+                                    </td>
+
+                                    <td rowspan="{{ teacher_assignments|length }}" style="padding:12px; vertical-align:top;">
+                                        {{ t.teacher_name or t.username }}
+                                    </td>
+
+                                    <td rowspan="{{ teacher_assignments|length }}" style="padding:12px; vertical-align:top;">
+                                        {{ t.username }}
+                                    </td>
+
+                                    <td rowspan="{{ teacher_assignments|length }}" style="padding:12px; vertical-align:top;">
+                                        ********
+                                    </td>
+                                {% endif %}
+
+                                <td style="padding:12px;">
+                                    Grade {{ a.grade }}{{ a.section }}
+                                </td>
+
+                                <td style="padding:12px;">
+                                    {{ a.stream or '-' }}
+                                </td>
+
+                                <td style="padding:12px;">
+                                    {{ a.subject or 'Not selected' }}
+                                </td>
+
+                                {% if loop.first %}
+                                    <td rowspan="{{ teacher_assignments|length }}" style="padding:12px; vertical-align:top;">
+                                        {% if t.class_teacher_grade %}
+                                            Class Teacher — Grade {{ t.class_teacher_grade }}{{ t.class_teacher_section }}
+                                        {% else %}
+                                            Subject Teacher
+                                        {% endif %}
+                                    </td>
+
+                                    <td rowspan="{{ teacher_assignments|length }}" style="padding:12px; vertical-align:top;">
+                                        <a href="{{ url_for('replace_teacher', teacher_id=t.id) }}"
+                                           class="btn"
+                                           style="text-decoration:none; white-space:nowrap;">
+                                            Replace Teacher
+                                        </a>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+
+                    {% else %}
+
+                        <tr>
+                            <td style="padding:12px;">{{ loop.index }}</td>
+                            <td style="padding:12px;">{{ t.teacher_name or t.username }}</td>
+                            <td style="padding:12px;">{{ t.username }}</td>
+                            <td style="padding:12px;">********</td>
+                            <td style="padding:12px;">-</td>
+                            <td style="padding:12px;">-</td>
+                            <td style="padding:12px;">-</td>
+
+                            <td style="padding:12px;">
+                                {% if t.class_teacher_grade %}
+                                    Class Teacher — Grade {{ t.class_teacher_grade }}{{ t.class_teacher_section }}
+                                {% else %}
+                                    Subject Teacher
+                                {% endif %}
+                            </td>
+
+                            <td style="padding:12px;">
+                                <a href="{{ url_for('replace_teacher', teacher_id=t.id) }}"
+                                   class="btn"
+                                   style="text-decoration:none;">
+                                    Replace Teacher
+                                </a>
+                            </td>
+                        </tr>
+
+                    {% endif %}
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="9" style="padding:15px; text-align:center;">
+                            No active teachers have been created yet.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+{% endblock %}

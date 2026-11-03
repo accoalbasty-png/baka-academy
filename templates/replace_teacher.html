@@ -1,0 +1,105 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="panel">
+
+    <h2>Replace Teacher</h2>
+
+    <p>Review the current teacher before selecting a replacement.</p>
+
+    <div class="panel">
+
+        <h3>Current Teacher</h3>
+
+        <p>
+            <strong>Name:</strong>
+            {{ old_teacher.teacher_name or old_teacher.username }}
+        </p>
+
+        <p>
+            <strong>Username:</strong>
+            {{ old_teacher.username }}
+        </p>
+
+        {% if old_teacher.class_teacher_grade %}
+            <p>
+                <strong>Role:</strong>
+                Class Teacher —
+                Grade {{ old_teacher.class_teacher_grade }}
+                {{ old_teacher.class_teacher_section }}
+            </p>
+        {% else %}
+            <p>
+                <strong>Role:</strong> Subject Teacher
+            </p>
+        {% endif %}
+
+    </div>
+
+    <h3>Select Replacement Teacher</h3>
+
+    {% if replacement_teachers %}
+
+        <form
+            method="POST"
+            action="{{ url_for('replace_teacher', teacher_id=old_teacher.id) }}"
+            onsubmit="return confirm('Are you sure you want to replace this teacher? The old account will be deactivated and assignments will be transferred.');"
+        >
+
+            <label>Choose New Teacher *</label>
+
+            <select name="new_teacher_id" required>
+
+                <option value="">Select a teacher</option>
+
+                {% for teacher in replacement_teachers %}
+
+                    <option value="{{ teacher.id }}">
+                        {{ teacher.teacher_name or teacher.username }}
+                        — {{ teacher.username }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+            <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+
+                <button type="submit" class="btn">
+                    Confirm Replacement
+                </button>
+
+                <a
+                    href="{{ url_for('admin') }}"
+                    class="btn"
+                    style="text-decoration:none;"
+                >
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    {% else %}
+
+        <p>
+            There are no other active teachers available
+            to replace this teacher.
+        </p>
+
+        <a href="{{ url_for('create_teacher') }}" class="btn">
+            Create New Teacher
+        </a>
+
+        <a href="{{ url_for('admin') }}" class="btn">
+            Back to Administrator Panel
+        </a>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

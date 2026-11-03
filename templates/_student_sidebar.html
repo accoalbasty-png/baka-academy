@@ -1,0 +1,158 @@
+
+<style>
+    .student-layout {
+        display: flex;
+        width: 100%;
+        min-height: calc(100vh - 130px);
+        background: #f4f7f5;
+    }
+
+    .student-sidebar {
+        width: 250px;
+        min-width: 250px;
+        flex: 0 0 250px;
+        background: #174b36;
+        color: white;
+        padding: 18px 13px;
+        transition: width 0.25s ease, min-width 0.25s ease,
+                    flex-basis 0.25s ease;
+        overflow: hidden;
+    }
+
+    .sidebar-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 38px;
+        padding: 0 5px 15px;
+        border-bottom: 1px solid #ffffff35;
+        margin-bottom: 18px;
+    }
+
+    .sidebar-heading {
+        font-size: 16px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .content-sidebar-toggle {
+        background: #ffffff20;
+        color: white;
+        border: 1px solid #ffffff55;
+        border-radius: 6px;
+        width: 36px;
+        height: 34px;
+        flex: 0 0 36px;
+        font-size: 21px;
+        font-weight: bold;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .content-sidebar-toggle:hover {
+        background: #ffffff35;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-height: 48px;
+        color: white;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 7px;
+        margin-bottom: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .sidebar-link:hover {
+        background: #ffffff25;
+        color: white;
+    }
+
+    .sidebar-icon {
+        width: 27px;
+        flex: 0 0 27px;
+        font-size: 19px;
+        text-align: center;
+    }
+
+    .student-content {
+        flex: 1;
+        min-width: 0;
+        padding: 20px;
+    }
+
+    .student-layout.sidebar-collapsed .student-sidebar {
+        width: 65px !important;
+        min-width: 65px !important;
+        flex: 0 0 65px !important;
+        padding: 18px 7px !important;
+    }
+
+    .student-layout.sidebar-collapsed .sidebar-heading {
+        display: none !important;
+    }
+
+    .student-layout.sidebar-collapsed .sidebar-top {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .student-layout.sidebar-collapsed .sidebar-link span:not(.sidebar-icon) {
+        display: none !important;
+    }
+
+    .student-layout.sidebar-collapsed .sidebar-link {
+        justify-content: center;
+        padding: 10px 5px;
+    }
+
+    @media (max-width: 650px) {
+        .student-content {
+            padding: 12px 8px;
+        }
+    }
+</style>
+
+<aside class="student-sidebar">
+    <div class="sidebar-top">
+        <div class="sidebar-heading">Student Management</div>
+
+        <button
+            type="button"
+            class="content-sidebar-toggle"
+            id="topSidebarToggle"
+            aria-label="Toggle sidebar"
+            title="Toggle sidebar">
+            ☰
+        </button>
+    </div>
+
+    <a class="sidebar-link" href="{{ url_for('register_student') }}">
+        <span class="sidebar-icon">➕</span>
+        <span>Register New Student</span>
+    </a>
+
+    <a class="sidebar-link" href="{{ url_for('student_list') }}">
+        <span class="sidebar-icon">📋</span>
+        <span>Student List</span>
+    </a>
+
+    <a class="sidebar-link" href="{{ url_for('student_results') }}">
+        <span class="sidebar-icon">📊</span>
+        <span>Student Result List</span>
+    </a>
+
+    <a class="sidebar-link" href="{{ url_for('left_students') }}">
+        <span class="sidebar-icon">🚪</span>
+        <span>Inactive Students</span>
+    </a>
+</aside>

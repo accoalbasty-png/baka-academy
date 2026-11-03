@@ -1,18 +1,21 @@
+
 {% extends "base.html" %}
 
-{% block title %}Student Report Card - Baka Academy{% endblock %}
+{% block title %}Student Profile - Baka Academy{% endblock %}
 
 {% block content %}
+
+{% set profile_source = request.args.get('source', 'results') %}
 
 {% set ns = namespace(semester1_sum=0, semester1_count=0, semester2_sum=0, semester2_count=0) %}
 
 {% for subject in subjects %}
     {% for mark in assessment_marks %}
-        {% if mark.subject == subject and mark.semester == 'Semester 1' %}
+        {% if mark.subject == subject and mark.semester in ['Semester 1', 'Term 1'] %}
             {% set ns.semester1_sum = ns.semester1_sum + mark.total %}
             {% set ns.semester1_count = ns.semester1_count + 1 %}
         {% endif %}
-        {% if mark.subject == subject and mark.semester == 'Semester 2' %}
+        {% if mark.subject == subject and mark.semester in ['Semester 2', 'Term 2'] %}
             {% set ns.semester2_sum = ns.semester2_sum + mark.total %}
             {% set ns.semester2_count = ns.semester2_count + 1 %}
         {% endif %}
@@ -42,16 +45,40 @@
     {% set final_grade = 'Not available' %}
 {% endif %}
 
+
+<!-- NORMAL STUDENT PROFILE -->
+
 <div class="profile-screen">
 
     <div class="profile-page-heading">
-        <h2>Student Profile and Report Card</h2>
+        <h2>
+            {% if profile_source == 'left_students' %}
+                Left Student Profile
+            {% elif profile_source == 'students' %}
+                Student Profile
+            {% else %}
+                Student Profile and Report Card
+            {% endif %}
+        </h2>
 
         <div class="profile-heading-actions">
-            <button type="button" onclick="window.print()">Print Report Card</button>
-            <a href="{{ url_for('student_management') }}">Back to Student List</a>
+
+            {% if profile_source == 'left_students' %}
+                <button type="button" onclick="window.print()">Print Transcript</button>
+                <a href="{{ url_for('left_students') }}">Back to Left Student List</a>
+
+            {% elif profile_source == 'students' %}
+                <a href="{{ url_for('student_id_card', student_id=student.id, source='profile') }}">Print ID Card</a>
+                <a href="{{ url_for('student_list') }}">Back to Student List</a>
+
+            {% else %}
+                <button type="button" onclick="window.print()">Print Report Card</button>
+                <a href="{{ url_for('student_results') }}">Back to Student Result List</a>
+            {% endif %}
+
         </div>
     </div>
+
 
     <div class="profile-card">
 
@@ -99,126 +126,115 @@
             <p><strong>Gregorian Academic Year:</strong> {{ student.academic_year_gc or "—" }}</p>
         </div>
 
-        <hr>
 
-        <h3>Student Results</h3>
+        {% if profile_source == 'results' %}
 
-        {% for semester in ['Semester 1', 'Semester 2'] %}
-
-            <h4>{{ semester }}</h4>
-
-            <div class="profile-table-wrapper">
-                <table class="profile-results-table">
-                    <thead>
-                        <tr>
-                            <th>Subject</th>
-                            <th>Quiz 1 /10</th>
-                            <th>Assignment /10</th>
-                            <th>Midterm /30</th>
-                            <th>Quiz 2 /10</th>
-                            <th>Final /40</th>
-                            <th>Total /100</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for subject in subjects %}
-                            {% set found = namespace(mark=none) %}
-
-                            {% for mark in assessment_marks %}
-                                {% if mark.subject == subject and mark.semester == semester %}
-                                    {% set found.mark = mark %}
-                                {% endif %}
-                            {% endfor %}
-
-                            <tr>
-                                <td>{{ subject }}</td>
-
-                                {% if found.mark %}
-                                    <td>{{ found.mark.quiz1 if found.mark.quiz1 is not none else "—" }}</td>
-                                    <td>{{ found.mark.assignment if found.mark.assignment is not none else "—" }}</td>
-                                    <td>{{ found.mark.midterm if found.mark.midterm is not none else "—" }}</td>
-                                    <td>{{ found.mark.quiz2 if found.mark.quiz2 is not none else "—" }}</td>
-                                    <td>{{ found.mark.final if found.mark.final is not none else "—" }}</td>
-                                    <td><strong>{{ "%.2f"|format(found.mark.total) }}</strong></td>
-                                {% else %}
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                {% endif %}
-                            </tr>
-
-                        {% else %}
-                            <tr>
-                                <td colspan="7">No subjects have been registered.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-        {% endfor %}
-
-        {% if marks %}
             <hr>
+            <h3>Student Results</h3>
 
-            <h3>Previously Recorded Scores</h3>
+            {% for semester in ['Semester 1', 'Semester 2'] %}
 
-            <div class="profile-table-wrapper">
-                <table class="profile-results-table">
-                    <thead>
-                        <tr>
-                            <th>Subject</th>
-                            <th>Term</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
+                <h4>{{ semester }}</h4>
 
-                    <tbody>
-                        {% for mark in marks %}
+                <div class="profile-table-wrapper">
+                    <table class="profile-results-table">
+                        <thead>
                             <tr>
-                                <td>{{ mark.subject }}</td>
-                                <td>{{ mark.term }}</td>
-                                <td>{{ mark.score }}</td>
+                                <th>Subject</th>
+                                <th>Quiz 1 /10</th>
+                                <th>Assignment /10</th>
+                                <th>Midterm /30</th>
+                                <th>Quiz 2 /10</th>
+                                <th>Final /40</th>
+                                <th>Total /100</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            {% for subject in subjects %}
+                                {% set found = namespace(mark=none) %}
+
+                                {% for mark in assessment_marks %}
+                                    {% if mark.subject == subject and (
+                                        mark.semester == semester or
+                                        (semester == 'Semester 1' and mark.semester == 'Term 1') or
+                                        (semester == 'Semester 2' and mark.semester == 'Term 2')
+                                    ) %}
+                                        {% set found.mark = mark %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <tr>
+                                    <td>{{ subject }}</td>
+
+                                    {% if found.mark %}
+                                        <td>{{ found.mark.quiz1 if found.mark.quiz1 is not none else "—" }}</td>
+                                        <td>{{ found.mark.assignment if found.mark.assignment is not none else "—" }}</td>
+                                        <td>{{ found.mark.midterm if found.mark.midterm is not none else "—" }}</td>
+                                        <td>{{ found.mark.quiz2 if found.mark.quiz2 is not none else "—" }}</td>
+                                        <td>{{ found.mark.final if found.mark.final is not none else "—" }}</td>
+                                        <td><strong>{{ "%.2f"|format(found.mark.total) }}</strong></td>
+                                    {% else %}
+                                        <td>—</td><td>—</td><td>—</td>
+                                        <td>—</td><td>—</td><td>—</td>
+                                    {% endif %}
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="7">No subjects have been registered.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% endfor %}
+
+
+            {% if marks %}
+                <hr>
+                <h3>Previously Recorded Scores</h3>
+
+                <div class="profile-table-wrapper">
+                    <table class="profile-results-table">
+                        <thead>
+                            <tr><th>Subject</th><th>Term</th><th>Score</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for mark in marks %}
+                                <tr>
+                                    <td>{{ mark.subject }}</td>
+                                    <td>{{ mark.term }}</td>
+                                    <td>{{ mark.score }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+
+            <hr>
+            <h3>Annual Result</h3>
+
+            <div class="profile-details">
+                <p><strong>Semester 1 Average:</strong>
+                    {{ "%.2f"|format(semester1_average) if semester1_average is not none else "—" }}
+                </p>
+                <p><strong>Semester 2 Average:</strong>
+                    {{ "%.2f"|format(semester2_average) if semester2_average is not none else "—" }}
+                </p>
+                <p><strong>Annual Average:</strong>
+                    {{ "%.2f"|format(annual_average) if annual_average is not none else "Not available — both semesters are required" }}
+                </p>
+                <p><strong>Final Grade:</strong> {{ final_grade }}</p>
+                <p><strong>Result:</strong>
+                    {% if annual_average is none %}Not available
+                    {% elif annual_average >= 50 %}PASS
+                    {% else %}FAIL{% endif %}
+                </p>
             </div>
+
         {% endif %}
 
-        <hr>
-
-        <h3>Annual Result</h3>
-
-        <div class="profile-details">
-            <p><strong>Semester 1 Average:</strong>
-                {{ "%.2f"|format(semester1_average) if semester1_average is not none else "—" }}
-            </p>
-
-            <p><strong>Semester 2 Average:</strong>
-                {{ "%.2f"|format(semester2_average) if semester2_average is not none else "—" }}
-            </p>
-
-            <p><strong>Annual Average:</strong>
-                {{ "%.2f"|format(annual_average) if annual_average is not none else "Not available — both semesters are required" }}
-            </p>
-
-            <p><strong>Final Grade:</strong> {{ final_grade }}</p>
-
-            <p><strong>Result:</strong>
-                {% if annual_average is none %}
-                    Not available
-                {% elif annual_average >= 50 %}
-                    PASS
-                {% else %}
-                    FAIL
-                {% endif %}
-            </p>
-        </div>
 
         <hr>
 
@@ -231,20 +247,148 @@
         {% endif %}
 
         <p class="profile-bottom-link">
-            <a href="{{ url_for('student_management') }}">Back to Student List</a>
+            {% if profile_source == 'left_students' %}
+                <a href="{{ url_for('left_students') }}">Back to Left Student List</a>
+            {% elif profile_source == 'students' %}
+                <a href="{{ url_for('student_list') }}">Back to Student List</a>
+            {% else %}
+                <a href="{{ url_for('student_results') }}">Back to Student Result List</a>
+            {% endif %}
         </p>
 
     </div>
 </div>
 
 
-<!-- PRINTABLE REPORT CARD: TWO LANDSCAPE A4 PAGES -->
+<!-- LEFT STUDENT TRANSCRIPT -->
+
+{% if profile_source == 'left_students' %}
+
+<div class="transcript-print">
+
+    <div class="transcript-letterhead">
+        <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Baka Academy Logo" class="transcript-logo">
+        <div class="transcript-school-name">
+            <h1>BAKA ACADEMY</h1>
+            <h2>STUDENT ACADEMIC TRANSCRIPT</h2>
+            <p>Official Student Academic Record</p>
+        </div>
+    </div>
+
+    <div class="transcript-top-details">
+
+        <div class="transcript-student-photo">
+            {% if student.photo_filename %}
+                <img src="{{ url_for('static', filename='uploads/student_photos/' ~ student.photo_filename) }}" alt="Student Photo">
+            {% else %}
+                <div class="transcript-no-photo">No Photo</div>
+            {% endif %}
+        </div>
+
+        <div class="transcript-student-info">
+            <p><strong>Student Name:</strong> {{ student.full_name }}</p>
+            <p><strong>Student ID:</strong> {{ student.student_id }}</p>
+            <p><strong>Sex:</strong>
+                {% if student.sex == 'M' %}Male
+                {% elif student.sex == 'F' %}Female
+                {% else %}—{% endif %}
+            </p>
+            <p><strong>Grade:</strong> {{ student.grade or "—" }}</p>
+            <p><strong>Section:</strong> {{ student.section or "—" }}</p>
+            <p><strong>Academic Year:</strong> {{ student.academic_year_ec or "—" }}</p>
+        </div>
+
+        <div class="transcript-rank">
+            <span>GRADE RANK</span>
+            {% if grade_rank %}
+                <strong>{{ grade_rank }}</strong>
+                <small>Out of {{ grade_student_count }}</small>
+            {% else %}
+                <strong>—</strong>
+                <small>Not available</small>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <h3 class="transcript-section-heading">SEMESTER RESULTS</h3>
+
+    <table class="transcript-results-table">
+        <thead>
+            <tr><th>Subject</th><th>Semester 1 /100</th><th>Semester 2 /100</th></tr>
+        </thead>
+        <tbody>
+            {% for subject in subjects %}
+                {% set result = namespace(s1=none, s2=none) %}
+
+                {% for mark in assessment_marks %}
+                    {% if mark.subject == subject %}
+                        {% if mark.semester in ['Semester 1', 'Term 1'] %}
+                            {% set result.s1 = mark.total %}
+                        {% elif mark.semester in ['Semester 2', 'Term 2'] %}
+                            {% set result.s2 = mark.total %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                <tr>
+                    <td>{{ subject }}</td>
+                    <td>{{ "%.2f"|format(result.s1) if result.s1 is not none else "—" }}</td>
+                    <td>{{ "%.2f"|format(result.s2) if result.s2 is not none else "—" }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3">No subject results recorded.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3 class="transcript-section-heading">ANNUAL ACADEMIC SUMMARY</h3>
+
+    <table class="transcript-summary-table">
+        <tr><th>Semester 1 Average</th><td>{{ "%.2f"|format(semester1_average) if semester1_average is not none else "Not available" }}</td></tr>
+        <tr><th>Semester 2 Average</th><td>{{ "%.2f"|format(semester2_average) if semester2_average is not none else "Not available" }}</td></tr>
+        <tr><th>Annual Average</th><td><strong>{{ "%.2f"|format(annual_average) if annual_average is not none else "Not available" }}</strong></td></tr>
+        <tr><th>Final Grade</th><td>{{ final_grade }}</td></tr>
+        <tr>
+            <th>Final Result</th>
+            <td>
+                {% if annual_average is none %}Not available
+                {% elif annual_average >= 50 %}PASS
+                {% else %}FAIL{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Grade Rank</th>
+            <td>{% if grade_rank %}{{ grade_rank }} out of {{ grade_student_count }}{% else %}Not available{% endif %}</td>
+        </tr>
+    </table>
+
+    <p class="transcript-note">
+        This transcript is based on the academic assessment records available for the student in the school's system.
+    </p>
+
+    <div class="transcript-signatures">
+        <div><p>Class Teacher</p><span>________________________</span></div>
+        <div><p>School Director</p><span>________________________</span></div>
+        <div><p>School Stamp</p><span>________________________</span></div>
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- THREE-PAGE REPORT CARD -->
+
+{% if profile_source == 'results' %}
 
 <div class="report-card-print">
 
-    <!-- FRONT PAGE -->
+    <!-- PAGE 1: FRONT -->
 
-    <section class="report-page">
+    <section class="report-page report-front-page">
+
+        <!-- FRONT LEFT: BAKA ACADEMY AND STUDENT INFORMATION -->
 
         <div class="report-half report-front-left">
 
@@ -254,183 +398,318 @@
                 <h2>STUDENT REPORT CARD</h2>
             </div>
 
-            <p class="report-year">
-                Academic Year: {{ student.academic_year_ec or "—" }}
-            </p>
+            <h2 class="report-section-title">STUDENT INFORMATION</h2>
 
-            <h3>STUDENT INFORMATION</h3>
+            <!-- ALL EIGHT FIELDS ARE INSIDE THIS SINGLE BOX -->
 
-            <table class="report-info-table">
-                <tr><th>Student Name</th><td>{{ student.full_name }}</td></tr>
-                <tr><th>Student ID</th><td>{{ student.student_id }}</td></tr>
-                <tr><th>Sex</th><td>{% if student.sex == 'M' %}Male{% elif student.sex == 'F' %}Female{% else %}—{% endif %}</td></tr>
-                <tr><th>Age</th><td>{{ student.age if student.age is not none else "—" }}</td></tr>
-                <tr><th>Grade</th><td>{{ student.grade or "—" }}</td></tr>
-                <tr><th>Section</th><td>{{ student.section or "—" }}</td></tr>
-                <tr><th>Academic Year</th><td>{{ student.academic_year_ec or "—" }}</td></tr>
-            </table>
+            <div class="report-student-details">
 
-            <div class="report-signatures">
-                <p>Class Teacher: ____________________</p>
-                <p>School Director: __________________</p>
+                <p>
+                    <strong>1. Student Name:</strong>
+                    {{ student.full_name }}
+                </p>
+
+                <p>
+                    <strong>2. Student ID:</strong>
+                    {{ student.student_id }}
+                </p>
+
+                <p>
+                    <strong>3. Age:</strong>
+                    {{ student.age if student.age is not none else "—" }}
+                </p>
+
+                <p>
+                    <strong>4. Sex:</strong>
+                    {% if student.sex == 'M' %}Male
+                    {% elif student.sex == 'F' %}Female
+                    {% else %}—{% endif %}
+                </p>
+
+                <p>
+                    <strong>5. Section:</strong>
+                    {{ student.section or "—" }}
+                </p>
+
+                <p>
+                    <strong>6. Academic Year:</strong>
+                    {{ student.academic_year_ec or "—" }}
+                </p>
+
+                <p>
+                    <strong>7. Grade:</strong>
+                    {{ student.grade or "—" }}
+                </p>
+
+                <p class="report-next-grade">
+                    <strong>8. Next Grade:</strong>
+                    ____________________
+                </p>
+
             </div>
 
         </div>
 
+
+        <!-- FRONT RIGHT: SCHOOL MESSAGE AND GRADING SCALE -->
+
         <div class="report-half report-front-right">
 
-            <h2>GRADING SCALE</h2>
+            <div class="report-school-message">
+                <h3>A MESSAGE FROM OUR SCHOOL</h3>
+                <p>
+                    Education is the key to knowledge, discipline, success,
+                    and a brighter future.
+                </p>
+            </div>
 
-            <table class="report-info-table">
-                <tr><th>Score</th><th>Grade</th></tr>
-                <tr><td>Below 50</td><td>Fail</td></tr>
-                <tr><td>50–64.99</td><td>Poor</td></tr>
-                <tr><td>65–79.99</td><td>Good</td></tr>
-                <tr><td>80–100</td><td>Very Good</td></tr>
-            </table>
+            <h2 class="report-grading-title">GRADING SCALE</h2>
 
-            <h2 class="report-result-heading">ANNUAL RESULT</h2>
+            <table class="report-info-table grading-table">
+                <tr>
+                    <th>Score</th>
+                    <th>Grade</th>
+                </tr>
 
-            <table class="report-info-table annual-table">
                 <tr>
-                    <th>Semester 1 Average</th>
-                    <td>{{ "%.2f"|format(semester1_average) if semester1_average is not none else "—" }}</td>
+                    <td>Below 50</td>
+                    <td>Fail</td>
                 </tr>
+
                 <tr>
-                    <th>Semester 2 Average</th>
-                    <td>{{ "%.2f"|format(semester2_average) if semester2_average is not none else "—" }}</td>
+                    <td>50–64.99</td>
+                    <td>Poor</td>
                 </tr>
+
                 <tr>
-                    <th>Annual Average</th>
-                    <td>{{ "%.2f"|format(annual_average) if annual_average is not none else "Not available" }}</td>
+                    <td>65–79.99</td>
+                    <td>Good</td>
                 </tr>
+
                 <tr>
-                    <th>Final Grade</th>
-                    <td>{{ final_grade }}</td>
-                </tr>
-                <tr>
-                    <th>Pass / Fail</th>
-                    <td>
-                        {% if annual_average is none %}Not available
-                        {% elif annual_average >= 50 %}PASS
-                        {% else %}FAIL{% endif %}
-                    </td>
+                    <td>80–100</td>
+                    <td>Very Good</td>
                 </tr>
             </table>
-
-            <p class="report-note">
-                Annual average is calculated only after results are available for both semesters.
-            </p>
 
         </div>
 
     </section>
 
 
-    <!-- BACK PAGE -->
+    <!-- PAGE 2: SEMESTER 1 LEFT, FEEDBACK RIGHT -->
 
     <section class="report-page report-back-page">
 
-        {% for semester in ['Semester 1', 'Semester 2'] %}
+        <!-- LEFT HALF: SEMESTER 1 RESULT -->
 
-            <div class="report-half report-semester">
+        <div class="report-half report-semester-results">
 
-                <h2>{{ semester }} RESULTS</h2>
-
-                <p class="report-student-name">{{ student.full_name }}</p>
-
-                <p>
-                    ID: {{ student.student_id }} |
-                    Grade: {{ student.grade or "—" }} |
-                    Section: {{ student.section or "—" }}
-                </p>
-
-                <table class="report-results-table">
-                    <thead>
-                        <tr>
-                            <th>Subject</th>
-                            <th>Q1<br>/10</th>
-                            <th>Ass.<br>/10</th>
-                            <th>Mid.<br>/30</th>
-                            <th>Q2<br>/10</th>
-                            <th>Final<br>/40</th>
-                            <th>Total<br>/100</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for subject in subjects %}
-
-                            {% set found = namespace(mark=none) %}
-
-                            {% for mark in assessment_marks %}
-                                {% if mark.subject == subject and mark.semester == semester %}
-                                    {% set found.mark = mark %}
-                                {% endif %}
-                            {% endfor %}
-
-                            <tr>
-                                <td>{{ subject }}</td>
-
-                                {% if found.mark %}
-                                    <td>{{ found.mark.quiz1 if found.mark.quiz1 is not none else "—" }}</td>
-                                    <td>{{ found.mark.assignment if found.mark.assignment is not none else "—" }}</td>
-                                    <td>{{ found.mark.midterm if found.mark.midterm is not none else "—" }}</td>
-                                    <td>{{ found.mark.quiz2 if found.mark.quiz2 is not none else "—" }}</td>
-                                    <td>{{ found.mark.final if found.mark.final is not none else "—" }}</td>
-                                    <td><strong>{{ "%.1f"|format(found.mark.total) }}</strong></td>
-                                {% else %}
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                {% endif %}
-                            </tr>
-
-                        {% else %}
-                            <tr>
-                                <td colspan="7">No subjects registered.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-                <p class="report-semester-average">
-                    {% if semester == 'Semester 1' %}
-                        Semester Average:
-                        {{ "%.2f"|format(semester1_average) if semester1_average is not none else "—" }}
-                    {% else %}
-                        Semester Average:
-                        {{ "%.2f"|format(semester2_average) if semester2_average is not none else "—" }}
-                    {% endif %}
-                </p>
-
+            <div class="report-back-heading">
+                <h1>BAKA ACADEMY</h1>
+                <h2>SEMESTER 1 RESULTS</h2>
             </div>
 
-        {% endfor %}
+            <h3 class="semester-title">SEMESTER 1 MARKS</h3>
+
+            <table class="report-results-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Q1<br>/10</th>
+                        <th>Ass.<br>/10</th>
+                        <th>Mid.<br>/30</th>
+                        <th>Q2<br>/10</th>
+                        <th>Final<br>/40</th>
+                        <th>Total<br>/100</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for subject in subjects %}
+                        {% set found = namespace(mark=none) %}
+
+                        {% for mark in assessment_marks %}
+                            {% if mark.subject == subject and mark.semester in ['Semester 1', 'Term 1'] %}
+                                {% set found.mark = mark %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <tr>
+                            <td>{{ subject }}</td>
+                            {% if found.mark %}
+                                <td>{{ found.mark.quiz1 if found.mark.quiz1 is not none else "—" }}</td>
+                                <td>{{ found.mark.assignment if found.mark.assignment is not none else "—" }}</td>
+                                <td>{{ found.mark.midterm if found.mark.midterm is not none else "—" }}</td>
+                                <td>{{ found.mark.quiz2 if found.mark.quiz2 is not none else "—" }}</td>
+                                <td>{{ found.mark.final if found.mark.final is not none else "—" }}</td>
+                                <td><strong>{{ "%.2f"|format(found.mark.total) }}</strong></td>
+                            {% else %}
+                                <td>—</td><td>—</td><td>—</td>
+                                <td>—</td><td>—</td><td>—</td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7">No subjects registered.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="report-semester-average">
+                <strong>Semester 1 Average:</strong>
+                {{ "%.2f"|format(semester1_average) if semester1_average is not none else "—" }}
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT HALF: SEMESTER 1 FEEDBACK -->
+
+        <div class="report-half report-feedback">
+
+            <div class="report-back-heading">
+                <h1>BAKA ACADEMY</h1>
+                <h2>STUDENT FEEDBACK</h2>
+            </div>
+
+            <h3>CLASS TEACHER'S FEEDBACK</h3>
+            <div class="feedback-writing-area"></div>
+
+            <h3>STRENGTHS AND ACHIEVEMENTS</h3>
+            <div class="feedback-writing-area feedback-small"></div>
+
+            <h3>AREAS THAT NEED IMPROVEMENT</h3>
+            <div class="feedback-writing-area feedback-small"></div>
+
+            <h3>PARENT / GUARDIAN COMMENTS</h3>
+            <div class="feedback-writing-area feedback-small"></div>
+
+            <div class="feedback-signatures">
+                <div><strong>Class Teacher</strong><p>___________________</p></div>
+                <div><strong>Parent / Guardian</strong><p>___________________</p></div>
+                <div><strong>School Director</strong><p>___________________</p></div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- PAGE 3: SEMESTER 2 LEFT, FEEDBACK RIGHT -->
+
+    <section class="report-page report-back-page">
+
+        <!-- LEFT HALF: SEMESTER 2 RESULT -->
+
+        <div class="report-half report-semester-results">
+
+            <div class="report-back-heading">
+                <h1>BAKA ACADEMY</h1>
+                <h2>SEMESTER 2 RESULTS</h2>
+            </div>
+
+            <h3 class="semester-title">SEMESTER 2 MARKS</h3>
+
+            <table class="report-results-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Q1<br>/10</th>
+                        <th>Ass.<br>/10</th>
+                        <th>Mid.<br>/30</th>
+                        <th>Q2<br>/10</th>
+                        <th>Final<br>/40</th>
+                        <th>Total<br>/100</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for subject in subjects %}
+                        {% set found = namespace(mark=none) %}
+
+                        {% for mark in assessment_marks %}
+                            {% if mark.subject == subject and mark.semester in ['Semester 2', 'Term 2'] %}
+                                {% set found.mark = mark %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <tr>
+                            <td>{{ subject }}</td>
+                            {% if found.mark %}
+                                <td>{{ found.mark.quiz1 if found.mark.quiz1 is not none else "—" }}</td>
+                                <td>{{ found.mark.assignment if found.mark.assignment is not none else "—" }}</td>
+                                <td>{{ found.mark.midterm if found.mark.midterm is not none else "—" }}</td>
+                                <td>{{ found.mark.quiz2 if found.mark.quiz2 is not none else "—" }}</td>
+                                <td>{{ found.mark.final if found.mark.final is not none else "—" }}</td>
+                                <td><strong>{{ "%.2f"|format(found.mark.total) }}</strong></td>
+                            {% else %}
+                                <td>—</td><td>—</td><td>—</td>
+                                <td>—</td><td>—</td><td>—</td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7">No subjects registered.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="report-semester-average">
+                <strong>Semester 2 Average:</strong>
+                {{ "%.2f"|format(semester2_average) if semester2_average is not none else "—" }}
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT HALF: SEMESTER 2 FEEDBACK -->
+
+        <div class="report-half report-feedback">
+
+            <div class="report-back-heading">
+                <h1>BAKA ACADEMY</h1>
+                <h2>STUDENT FEEDBACK</h2>
+            </div>
+
+            <h3>CLASS TEACHER'S FEEDBACK</h3>
+            <div class="feedback-writing-area"></div>
+
+            <h3>STRENGTHS AND ACHIEVEMENTS</h3>
+            <div class="feedback-writing-area feedback-small"></div>
+
+            <h3>AREAS THAT NEED IMPROVEMENT</h3>
+            <div class="feedback-writing-area feedback-small"></div>
+
+            <h3>PARENT / GUARDIAN COMMENTS</h3>
+            <div class="feedback-writing-area feedback-small"></div>
+
+            <div class="feedback-signatures">
+                <div><strong>Class Teacher</strong><p>___________________</p></div>
+                <div><strong>Parent / Guardian</strong><p>___________________</p></div>
+                <div><strong>School Director</strong><p>___________________</p></div>
+            </div>
+
+        </div>
 
     </section>
 
 </div>
 
+{% endif %}
+
 
 <style>
 
-/* SCREEN PROFILE LAYOUT */
+/* PROFILE SCREEN */
 
 .profile-screen {
     width: 100%;
     max-width: 100%;
-    min-width: 0;
     margin: 0 auto;
     padding: 18px 24px;
     overflow-x: hidden;
 }
 
 .profile-page-heading {
-    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -442,7 +721,6 @@
 .profile-page-heading h2 {
     margin: 0;
     font-size: 24px;
-    overflow-wrap: anywhere;
 }
 
 .profile-heading-actions {
@@ -472,8 +750,6 @@
 
 .profile-card {
     width: 100%;
-    max-width: 100%;
-    min-width: 0;
     padding: 22px;
     background: white;
     border-radius: 10px;
@@ -531,16 +807,13 @@
 }
 
 .profile-details p {
-    min-width: 0;
     margin: 5px 0;
     overflow-wrap: anywhere;
 }
 
 .profile-table-wrapper {
     width: 100%;
-    max-width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .profile-results-table {
@@ -566,23 +839,14 @@
     text-align: left;
 }
 
-.profile-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-}
-
 .profile-actions a {
     display: inline-block;
     padding: 9px 14px;
-    border: none;
     border-radius: 6px;
     background: #174b36;
     color: white;
     text-decoration: none;
     font-weight: bold;
-    cursor: pointer;
 }
 
 .profile-bottom-link {
@@ -594,12 +858,164 @@
     font-weight: bold;
 }
 
-.report-card-print {
+
+/* PRINT AREAS HIDDEN ON SCREEN */
+
+.report-card-print,
+.transcript-print {
     display: none;
 }
 
 
-/* TABLET */
+/* TRANSCRIPT */
+
+.transcript-print {
+    font-family: Arial, sans-serif;
+    color: #111;
+}
+
+.transcript-letterhead {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    border-bottom: 3px double #174b36;
+    padding-bottom: 12px;
+    text-align: center;
+}
+
+.transcript-logo {
+    width: 85px;
+    height: 85px;
+    object-fit: contain;
+}
+
+.transcript-school-name h1 {
+    color: #174b36;
+    font-size: 25px;
+    margin: 0 0 5px;
+}
+
+.transcript-school-name h2 {
+    font-size: 17px;
+    margin: 0 0 5px;
+}
+
+.transcript-school-name p {
+    margin: 0;
+    font-size: 11px;
+}
+
+.transcript-top-details {
+    display: grid;
+    grid-template-columns: 105px 1fr 125px;
+    gap: 15px;
+    align-items: center;
+    margin: 18px 0;
+}
+
+.transcript-student-photo img,
+.transcript-no-photo {
+    width: 95px;
+    height: 110px;
+    object-fit: cover;
+    border: 1px solid #777;
+}
+
+.transcript-no-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.transcript-student-info p {
+    margin: 7px 0;
+    font-size: 12px;
+}
+
+.transcript-rank {
+    border: 2px solid #174b36;
+    padding: 10px 5px;
+    text-align: center;
+}
+
+.transcript-rank span,
+.transcript-rank small {
+    display: block;
+    font-size: 10px;
+}
+
+.transcript-rank strong {
+    display: block;
+    color: #174b36;
+    font-size: 30px;
+    margin: 5px 0;
+}
+
+.transcript-section-heading {
+    background: #174b36;
+    color: white;
+    padding: 8px;
+    font-size: 13px;
+    margin: 16px 0 8px;
+}
+
+.transcript-results-table,
+.transcript-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.transcript-results-table th,
+.transcript-results-table td,
+.transcript-summary-table th,
+.transcript-summary-table td {
+    border: 1px solid #777;
+    padding: 7px;
+}
+
+.transcript-results-table th {
+    background: #e8f0eb;
+    text-align: center;
+}
+
+.transcript-results-table td:first-child {
+    text-align: left;
+}
+
+.transcript-results-table td:not(:first-child),
+.transcript-summary-table td {
+    text-align: center;
+}
+
+.transcript-summary-table th {
+    width: 45%;
+    text-align: left;
+    background: #f0f3f1;
+}
+
+.transcript-note {
+    font-size: 9px;
+    margin-top: 12px;
+}
+
+.transcript-signatures {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 35px;
+    font-size: 10px;
+    text-align: center;
+}
+
+.transcript-signatures div {
+    flex: 1;
+}
+
+
+/* MOBILE */
 
 @media screen and (max-width: 900px) {
     .profile-screen {
@@ -609,14 +1025,7 @@
     .profile-card {
         padding: 16px;
     }
-
-    .profile-page-heading h2 {
-        font-size: 21px;
-    }
 }
-
-
-/* MOBILE */
 
 @media screen and (max-width: 600px) {
     .profile-screen {
@@ -626,10 +1035,6 @@
     .profile-page-heading {
         align-items: flex-start;
         flex-direction: column;
-    }
-
-    .profile-page-heading h2 {
-        font-size: 20px;
     }
 
     .profile-heading-actions {
@@ -644,50 +1049,72 @@
 
     .profile-card {
         padding: 12px;
-        border-radius: 7px;
-    }
-
-    .student-profile-header {
-        align-items: center;
-        gap: 12px;
-    }
-
-    .student-profile-photo,
-    .student-photo-placeholder {
-        width: 85px;
-        height: 100px;
-    }
-
-    .student-profile-heading-text h2 {
-        font-size: 18px;
     }
 
     .profile-details {
         grid-template-columns: minmax(0, 1fr);
-        gap: 5px;
-    }
-
-    .profile-results-table {
-        min-width: 700px;
-    }
-
-    .profile-card h3 {
-        font-size: 17px;
-    }
-
-    .profile-actions {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .profile-actions a {
-        width: 100%;
-        text-align: center;
     }
 }
 
 
-/* PRINT: TWO LANDSCAPE A4 PAGES */
+/* LEFT STUDENT TRANSCRIPT PRINT */
+
+{% if profile_source == 'left_students' %}
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 12mm;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .transcript-print,
+    .transcript-print * {
+        visibility: visible !important;
+    }
+
+    .transcript-print {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+    }
+
+    .profile-screen {
+        display: none !important;
+    }
+
+    .transcript-section-heading {
+        background: #174b36 !important;
+        color: white !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .transcript-results-table th {
+        background: #e8f0eb !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .transcript-signatures {
+        break-inside: avoid;
+    }
+}
+
+{% endif %}
+
+
+/* THREE-PAGE LANDSCAPE REPORT CARD */
+
+{% if profile_source == 'results' %}
 
 @media print {
 
@@ -698,11 +1125,9 @@
 
     html,
     body {
-        width: auto !important;
-        min-height: 0 !important;
+        width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
-        overflow: visible !important;
         background: white !important;
         color: black !important;
     }
@@ -719,8 +1144,8 @@
     .report-card-print {
         display: block !important;
         position: absolute;
-        left: 0;
         top: 0;
+        left: 0;
         width: 100%;
     }
 
@@ -731,34 +1156,40 @@
         display: none !important;
     }
 
+    /* EACH SECTION IS ONE FULL PRINT PAGE */
+
     .report-page {
         width: 100%;
         height: 190mm;
-        display: flex;
-        flex-direction: row;
+        display: flex !important;
+        flex-direction: row !important;
         gap: 5mm;
         box-sizing: border-box;
-        page-break-after: always;
-        break-after: page;
         overflow: hidden;
+        page-break-after: always !important;
+        break-after: page !important;
     }
 
     .report-page:last-child {
-        page-break-after: auto;
-        break-after: auto;
+        page-break-after: auto !important;
+        break-after: auto !important;
     }
 
     .report-half {
-        width: 50%;
-        flex: 1 1 50%;
+        width: calc(50% - 2.5mm);
+        flex: 0 0 calc(50% - 2.5mm);
+        height: 190mm;
         box-sizing: border-box;
         border: 1px solid black;
         padding: 6mm;
         overflow: hidden;
     }
 
+    /* FRONT PAGE */
+
     .report-school-heading {
         text-align: center;
+        margin-bottom: 8mm;
     }
 
     .report-school-heading img {
@@ -777,52 +1208,148 @@
         margin: 2mm 0;
     }
 
-    .report-year {
-        text-align: center;
-        font-weight: bold;
-        margin: 5mm 0;
-    }
-
-    .report-half h2 {
+    .report-section-title {
         text-align: center;
         font-size: 14pt;
-        margin: 2mm 0 5mm;
+        margin: 7mm 0 5mm;
+        padding-bottom: 3mm;
+        border-bottom: 2px solid black;
     }
 
-    .report-half h3 {
-        font-size: 12pt;
-        margin: 4mm 0 2mm;
-    }
-
-    .report-info-table,
-    .report-results-table {
+    .report-info-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 9pt;
+        font-size: 10pt;
     }
 
     .report-info-table th,
-    .report-info-table td,
-    .report-results-table th,
-    .report-results-table td {
+    .report-info-table td {
         border: 1px solid black;
-        padding: 2.5mm 1.5mm;
+        padding: 3mm;
         text-align: left;
     }
 
     .report-info-table th {
-        width: 48%;
+        width: 43%;
+    }
+
+    .report-right-title {
+        text-align: center;
+        font-size: 15pt;
+        margin: 2mm 0 5mm;
+    }
+
+    /* SCHOOL MESSAGE ON RIGHT HALF */
+
+    .report-school-message {
+        border: 1px solid black;
+        padding: 5mm;
+        margin: 12mm 0 9mm;
+        text-align: center;
+    }
+
+    .report-school-message h3 {
+        font-size: 12pt;
+        margin: 0 0 4mm;
+        padding-bottom: 2mm;
+        border-bottom: 1px solid black;
+    }
+
+    .report-school-message p {
+        font-size: 11pt;
+        line-height: 1.6;
+        margin: 0;
+        font-style: italic;
+    }
+
+    /* GRADING SCALE ON RIGHT HALF */
+
+    .report-grading-title {
+        text-align: center;
+        font-size: 14pt;
+        margin: 5mm 0;
+    }
+
+    .grading-table th,
+    .grading-table td {
+        text-align: center;
+    }
+
+    /* STUDENT INFORMATION: ONE SINGLE BOX ON LEFT */
+
+    .report-front-left .report-section-title {
+        margin-top: 7mm;
+        margin-bottom: 5mm;
+    }
+
+    .report-student-details {
+        border: 1px solid black;
+        padding: 6mm;
+        margin-bottom: 0;
+        font-size: 11pt;
+        line-height: 2;
+        min-height: 110mm;
+        box-sizing: border-box;
+    }
+
+    .report-student-details p {
+        margin: 2mm 0;
+        padding-bottom: 2mm;
+        border-bottom: 1px solid #cccccc;
+    }
+
+    .report-student-details p:last-child {
+        border-bottom: none;
+    }
+
+    .report-next-grade {
+        margin-top: 5mm !important;
+        padding-top: 3mm;
+        border-top: 1px solid black;
+    }
+
+    /* BACK PAGES */
+
+    .report-back-heading {
+        text-align: center;
+        border-bottom: 1px solid black;
+        padding-bottom: 4mm;
+        margin-bottom: 7mm;
+    }
+
+    .report-back-heading h1 {
+        font-size: 17pt;
+        margin: 0 0 2mm;
+    }
+
+    .report-back-heading h2 {
+        font-size: 13pt;
+        margin: 0;
+    }
+
+    .semester-title {
+        text-align: center;
+        background: #e8f0eb;
+        padding: 3mm;
+        border: 1px solid black;
+        margin: 4mm 0 !important;
+        font-size: 11pt !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
     .report-results-table {
+        width: 100%;
+        border-collapse: collapse;
         font-size: 7.5pt;
         table-layout: fixed;
     }
 
     .report-results-table th,
     .report-results-table td {
+        border: 1px solid black;
         text-align: center;
-        padding: 2mm 0.5mm;
+        padding: 2.5mm 0.5mm;
         overflow-wrap: anywhere;
     }
 
@@ -837,39 +1364,57 @@
         width: 12.16%;
     }
 
-    .report-result-heading {
-        margin-top: 12mm !important;
+    .report-semester-average {
+        margin-top: 8mm;
+        padding: 4mm;
+        border: 1px solid black;
+        font-size: 11pt;
+        text-align: right;
     }
 
-    .annual-table td {
-        font-weight: bold;
+    /* FEEDBACK HALF */
+
+    .report-feedback h3 {
+        font-size: 10pt;
+        margin: 5mm 0 2mm;
     }
 
-    .report-note {
-        font-size: 8pt;
+    .feedback-writing-area {
+        height: 27mm;
+        border: 1px solid black;
+        background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 7mm,
+            #cccccc 7.1mm,
+            #cccccc 7.3mm
+        );
+    }
+
+    .feedback-small {
+        height: 19mm;
+    }
+
+    .feedback-signatures {
+        display: flex;
+        justify-content: space-between;
+        gap: 2mm;
+        margin-top: 8mm;
+        text-align: center;
+        font-size: 7pt;
+    }
+
+    .feedback-signatures div {
+        flex: 1;
+    }
+
+    .feedback-signatures p {
         margin-top: 5mm;
     }
 
-    .report-signatures {
-        margin-top: 18mm;
-        font-size: 9pt;
-    }
-
-    .report-student-name {
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .report-semester > p {
-        font-size: 8pt;
-        text-align: center;
-    }
-
-    .report-semester-average {
-        font-weight: bold;
-        margin-top: 6mm;
-    }
 }
+
+{% endif %}
 
 </style>
 

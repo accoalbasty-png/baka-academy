@@ -6,7 +6,6 @@
 {% block content %}
 
 <style>
-    /* Connect the student dashboard directly to the shared header/navigation */
     body:has(.student-dashboard) main {
         width: 100%;
         max-width: none;
@@ -29,32 +28,55 @@
         position: relative;
     }
 
-    /* SIDEBAR */
-    .student-sidebar {
+    .student-dashboard .student-sidebar {
         width: 250px;
         min-width: 250px;
+        flex: 0 0 250px;
         background: #174b36;
         color: white;
-        padding: 24px 13px;
-        transition: width 0.25s ease, min-width 0.25s ease;
+        padding: 18px 13px;
+        transition: width 0.25s ease, min-width 0.25s ease, flex-basis 0.25s ease;
         overflow: hidden;
     }
 
-    .student-sidebar.collapsed {
-        width: 70px;
-        min-width: 70px;
-    }
-
-    .sidebar-heading {
-        font-size: 16px;
-        font-weight: 700;
-        padding: 0 10px 20px;
+    .student-dashboard .sidebar-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 38px;
+        padding: 0 5px 15px;
         border-bottom: 1px solid #ffffff35;
         margin-bottom: 18px;
+    }
+
+    .student-dashboard .sidebar-heading {
+        font-size: 16px;
+        font-weight: 700;
         white-space: nowrap;
     }
 
-    .sidebar-link {
+    .student-dashboard .content-sidebar-toggle {
+        background: #ffffff20;
+        color: white;
+        border: 1px solid #ffffff55;
+        border-radius: 6px;
+        width: 36px;
+        height: 34px;
+        flex: 0 0 36px;
+        font-size: 21px;
+        font-weight: bold;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .student-dashboard .content-sidebar-toggle:hover {
+        background: #ffffff35;
+    }
+
+    .student-dashboard .sidebar-link {
         display: flex;
         align-items: center;
         gap: 13px;
@@ -70,13 +92,13 @@
         transition: background 0.2s ease;
     }
 
-    .sidebar-link:hover,
-    .sidebar-link.active {
+    .student-dashboard .sidebar-link:hover,
+    .student-dashboard .sidebar-link.active {
         background: #ffffff25;
         color: white;
     }
 
-    .sidebar-icon {
+    .student-dashboard .sidebar-icon {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -89,46 +111,6 @@
         line-height: 1;
     }
 
-    .student-sidebar.collapsed .sidebar-heading,
-    .student-sidebar.collapsed .sidebar-link span:not(.sidebar-icon) {
-        display: none;
-    }
-
-    .student-sidebar.collapsed .sidebar-link {
-        justify-content: center;
-        padding: 10px 5px;
-    }
-
-    .student-sidebar.collapsed .sidebar-icon {
-        width: 34px;
-        height: 34px;
-        flex-basis: 34px;
-        font-size: 21px;
-    }
-
-    /* SIDEBAR TOGGLE */
-    .sidebar-toggle {
-        position: absolute;
-        top: 18px;
-        left: 235px;
-        z-index: 5;
-        width: 30px;
-        height: 30px;
-        border: 2px solid #174b36;
-        border-radius: 50%;
-        background: #ffffff;
-        color: #174b36;
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: left 0.25s ease;
-    }
-
-    .student-sidebar.collapsed ~ .sidebar-toggle {
-        left: 55px;
-    }
-
-    /* MAIN CONTENT */
     .student-main {
         flex: 1;
         min-width: 0;
@@ -172,7 +154,6 @@
         color: white;
     }
 
-    /* STATISTICS */
     .student-stats {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -206,7 +187,6 @@
         font-size: 11px;
     }
 
-    /* CHART AND RECENT STUDENTS */
     .student-dashboard-grid {
         display: grid;
         grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -313,7 +293,6 @@
         border-radius: 50%;
     }
 
-    /* RECENT STUDENTS */
     .recent-students {
         display: flex;
         flex-direction: column;
@@ -367,7 +346,33 @@
         padding: 15px 0;
     }
 
-    /* RESPONSIVE */
+    /* Minimized sidebar */
+    .student-dashboard.sidebar-collapsed .student-sidebar {
+        width: 65px !important;
+        min-width: 65px !important;
+        flex: 0 0 65px !important;
+        padding: 18px 7px !important;
+    }
+
+    .student-dashboard.sidebar-collapsed .sidebar-heading {
+        display: none !important;
+    }
+
+    .student-dashboard.sidebar-collapsed .sidebar-top {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .student-dashboard.sidebar-collapsed .sidebar-link span:not(.sidebar-icon) {
+        display: none !important;
+    }
+
+    .student-dashboard.sidebar-collapsed .sidebar-link {
+        justify-content: center;
+        padding: 10px 5px;
+    }
+
     @media (max-width: 1000px) {
         .student-stats {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -381,26 +386,6 @@
     @media (max-width: 650px) {
         .student-dashboard {
             min-height: calc(100vh - 100px);
-        }
-
-        .student-sidebar {
-            width: 65px;
-            min-width: 65px;
-            padding: 15px 7px;
-        }
-
-        .student-sidebar .sidebar-heading,
-        .student-sidebar .sidebar-link span:not(.sidebar-icon) {
-            display: none;
-        }
-
-        .student-sidebar .sidebar-link {
-            justify-content: center;
-            padding: 10px 5px;
-        }
-
-        .sidebar-toggle {
-            display: none;
         }
 
         .student-main {
@@ -433,55 +418,51 @@
 
     <aside class="student-sidebar" id="studentSidebar">
 
-        <div class="sidebar-heading">
-            Student Management
+        <div class="sidebar-top">
+
+            <div class="sidebar-heading">
+                Student Management
+            </div>
+
+            <button type="button"
+                    class="content-sidebar-toggle"
+                    id="topSidebarToggle"
+                    aria-label="Toggle sidebar"
+                    title="Toggle sidebar">
+                ☰
+            </button>
+
         </div>
 
         <a class="sidebar-link"
            href="{{ url_for('register_student') }}"
            title="Register New Student">
-
             <span class="sidebar-icon" aria-hidden="true">👤</span>
             <span>Register New Student</span>
-
         </a>
 
         <a class="sidebar-link"
            href="{{ url_for('student_list') }}"
            title="Student List">
-
             <span class="sidebar-icon" aria-hidden="true">📋</span>
             <span>Student List</span>
-
         </a>
 
         <a class="sidebar-link"
            href="{{ url_for('student_results') }}"
            title="Student Result List">
-
             <span class="sidebar-icon" aria-hidden="true">📊</span>
             <span>Student Result List</span>
-
         </a>
 
         <a class="sidebar-link"
            href="{{ url_for('left_students') }}"
-           title="Left Students">
-
+           title="Inactive Students">
             <span class="sidebar-icon" aria-hidden="true">🚪</span>
-            <span>Left Students</span>
-
+            <span>Inactive Students</span>
         </a>
 
     </aside>
-
-    <button
-        type="button"
-        class="sidebar-toggle"
-        id="sidebarToggle"
-        aria-label="Toggle sidebar">
-        ‹
-    </button>
 
     <section class="student-main">
 
@@ -653,19 +634,5 @@
     </section>
 
 </div>
-
-<script>
-    const sidebar = document.getElementById("studentSidebar");
-    const toggleButton = document.getElementById("sidebarToggle");
-
-    if (sidebar && toggleButton) {
-        toggleButton.addEventListener("click", function () {
-            sidebar.classList.toggle("collapsed");
-
-            toggleButton.textContent =
-                sidebar.classList.contains("collapsed") ? "›" : "‹";
-        });
-    }
-</script>
 
 {% endblock %}

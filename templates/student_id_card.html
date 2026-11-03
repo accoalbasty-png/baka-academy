@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,6 +37,12 @@
             color: #536b7a;
         }
 
+        .cards-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .card {
             width: 85.6mm;
             height: 54mm;
@@ -46,6 +53,7 @@
             border-radius: 3mm;
             margin: 20px auto;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            flex-shrink: 0;
         }
 
         /* OXFORD BLUE HEADER */
@@ -170,7 +178,7 @@
             color: #6b8798;
         }
 
-        /* OXFORD BLUE FRONT FOOTER WITH ACADEMIC YEAR */
+        /* FRONT FOOTER */
 
         .front-footer {
             height: 9mm;
@@ -187,6 +195,8 @@
         .academic-year-label {
             color: white;
         }
+
+        /* BACK OF ID CARD */
 
         .back-body {
             height: 43mm;
@@ -211,8 +221,6 @@
             color: #173d58;
         }
 
-        /* OXFORD BLUE BACK FOOTER */
-
         .back-footer {
             height: 11mm;
             background: #002147;
@@ -225,6 +233,8 @@
             font-weight: bold;
             padding: 1mm 3mm;
         }
+
+        /* BUTTONS */
 
         .controls {
             display: flex;
@@ -262,10 +272,21 @@
             font-weight: bold;
         }
 
+        /* PRINT SETTINGS */
+
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
         @media print {
-            body {
+
+            html, body {
+                width: 100%;
+                height: auto;
                 background: white;
                 padding: 0;
+                margin: 0;
             }
 
             .controls,
@@ -276,12 +297,32 @@
             }
 
             .page {
+                width: 100%;
                 max-width: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            /* FRONT AND BACK SIDE BY SIDE */
+
+            .cards-row {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 8mm;
+                width: 100%;
+                margin: 25mm auto 0;
             }
 
             .card {
-                margin: 10mm auto;
+                width: 85.6mm;
+                height: 54mm;
+                margin: 0;
                 box-shadow: none;
+                flex-shrink: 0;
+                break-inside: avoid;
+                page-break-inside: avoid;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -305,105 +346,107 @@
         Front and back ID card preview. Export each side as a high-quality JPG.
     </p>
 
-    <!-- FRONT OF ID CARD -->
+    <div class="cards-row">
 
-    <div class="card" id="frontCard">
+        <!-- FRONT OF ID CARD -->
 
-        <div class="front-header">
-            <img
-                class="school-logo"
-                src="{{ url_for('static', filename='logo.jpg') }}"
-                alt="Baka Academy Logo"
-                crossorigin="anonymous"
-            >
+        <div class="card" id="frontCard">
 
-            <div class="school-heading">
-                <h3>BAKA ACADEMY</h3>
-                <p>STUDENT ID CARD</p>
-            </div>
-        </div>
+            <div class="front-header">
+                <img
+                    class="school-logo"
+                    src="{{ url_for('static', filename='logo.jpg') }}"
+                    alt="Baka Academy Logo"
+                    crossorigin="anonymous"
+                >
 
-        <div class="front-body">
-
-            <div class="student-details">
-
-                <div class="label">STUDENT NAME</div>
-
-                <div class="student-name">
-                    {{ student.full_name }}
+                <div class="school-heading">
+                    <h3>BAKA ACADEMY</h3>
+                    <p>STUDENT ID CARD</p>
                 </div>
-
-                <div class="grade">
-                    Grade {{ student.grade }}
-                    {% if student.section %}
-                        - Section {{ student.section }}
-                    {% endif %}
-                </div>
-
             </div>
 
-            <div class="photo-section">
+            <div class="front-body">
 
-                <div class="student-number">
-                    ID: {{ student.student_id }}
-                </div>
+                <div class="student-details">
 
-                {% if student.photo_filename %}
-                    <img
-                        class="student-photo"
-                        src="{{ url_for('static', filename='uploads/student_photos/' ~ student.photo_filename) }}"
-                        alt="Student Photo"
-                        crossorigin="anonymous"
-                    >
-                {% else %}
-                    <div class="photo-placeholder">
-                        STUDENT<br>PHOTO
+                    <div class="label">STUDENT NAME</div>
+
+                    <div class="student-name">
+                        {{ student.full_name }}
                     </div>
-                {% endif %}
 
+                    <div class="grade">
+                        Grade {{ student.grade }}
+                        {% if student.section %}
+                            - Section {{ student.section }}
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="photo-section">
+
+                    <div class="student-number">
+                        ID: {{ student.student_id }}
+                    </div>
+
+                    {% if student.photo_filename %}
+                        <img
+                            class="student-photo"
+                            src="{{ url_for('static', filename='uploads/student_photos/' ~ student.photo_filename) }}"
+                            alt="Student Photo"
+                            crossorigin="anonymous"
+                        >
+                    {% else %}
+                        <div class="photo-placeholder">
+                            STUDENT<br>PHOTO
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <div class="front-footer">
+                <span class="academic-year-label">E.C. ACADEMIC YEAR:</span>
+                <span>{{ student.academic_year_ec or "Not provided" }}</span>
             </div>
 
         </div>
 
-        <div class="front-footer">
-            <span class="academic-year-label">E.C. ACADEMIC YEAR:</span>
-            <span>{{ student.academic_year_ec or "Not provided" }}</span>
-        </div>
+        <!-- BACK OF ID CARD -->
 
-    </div>
+        <div class="card" id="backCard">
 
+            <div class="back-body">
+                <div>
 
-    <!-- BACK OF ID CARD -->
+                    <div class="return-message">
+                        The holder of this ID card is a student
+                        of Baka Academy.
 
-    <div class="card" id="backCard">
+                        <br><br>
 
-        <div class="back-body">
-            <div>
+                        If this card is found, please return it
+                        to the school.
+                    </div>
 
-                <div class="return-message">
-                    The holder of this ID card is a student
-                    of Baka Academy.
+                    <div class="back-school">
+                        BAKA ACADEMY
+                    </div>
 
-                    <br><br>
-
-                    If this card is found, please return it
-                    to the school.
                 </div>
-
-                <div class="back-school">
-                    BAKA ACADEMY
-                </div>
-
             </div>
-        </div>
 
-        <div class="back-footer">
-            Family Phone:
-            {{ student.family_phone or "Not provided" }}
+            <div class="back-footer">
+                Family Phone:
+                {{ student.family_phone or "Not provided" }}
+            </div>
+
         </div>
 
     </div>
-
 
     <!-- EXPORT BUTTONS -->
 
@@ -423,15 +466,29 @@
 
     </div>
 
-    <a
-        class="back-button"
-        href="{{ url_for('student_management') }}"
-    >
-        ← Back to Student List
-    </a>
+    <!-- BACK BUTTON: DEPENDS ON WHERE ID CARD WAS OPENED -->
+
+    {% if request.args.get('source') == 'profile' %}
+
+        <a
+            class="back-button"
+            href="{{ url_for('student_profile', student_id=student.id, source='students') }}"
+        >
+            ← Back to Student Profile
+        </a>
+
+    {% else %}
+
+        <a
+            class="back-button"
+            href="{{ url_for('student_list') }}"
+        >
+            ← Back to Student List
+        </a>
+
+    {% endif %}
 
 </div>
-
 
 <script>
 async function downloadCard(cardId, side, button) {
